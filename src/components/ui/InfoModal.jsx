@@ -41,20 +41,23 @@ export function InfoModal({ onClose }) {
 
           <section className={styles.section}>
             <h3>Puntuación</h3>
-            <p>El valor de cada columna se calcula por grupos de dados con el mismo número:</p>
+            <p>
+              Cada grupo de dados iguales en una columna puntúa así:{' '}
+              <strong>(suma de sus valores) × cantidad de dados iguales</strong>.
+            </p>
             <table className={styles.table}>
               <thead>
                 <tr><th>Dados iguales</th><th>Fórmula</th><th>Ejemplo (valor 3)</th></tr>
               </thead>
               <tbody>
-                <tr><td>1 dado</td><td>valor × 1</td><td>3</td></tr>
-                <tr><td className={styles.gold}>2 dados <span>⬛⬛</span></td><td>valor × 4</td><td>12</td></tr>
-                <tr><td className={styles.blue}>3 dados <span>⬛⬛⬛</span></td><td>valor × 9</td><td>27</td></tr>
+                <tr><td>1 dado</td><td>3 × 1</td><td>3</td></tr>
+                <tr><td className={styles.gold}>2 dados</td><td>(3+3) × 2</td><td>12</td></tr>
+                <tr><td className={styles.blue}>3 dados</td><td>(3+3+3) × 3</td><td>27</td></tr>
               </tbody>
             </table>
             <p className={styles.hint}>
-              Los dados <span className={styles.goldText}>dorados</span> tienen ×4 y los{' '}
-              <span className={styles.blueText}>azules</span> tienen ×9.
+              Los dados <span className={styles.goldText}>dorados</span> se multiplican ×2 y los{' '}
+              <span className={styles.blueText}>azules</span> ×3.
             </p>
           </section>
 

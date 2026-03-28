@@ -15,7 +15,17 @@ export const MODES = {
   BOT: 'bot',
 }
 
-/** Score for a column: sum over each value group of (value × count²) */
+/**
+ * Score for a column: for each group of identical dice,
+ *   group_score = (sum of their values) × count
+ *              = (value × count) × count
+ *              = value × count²
+ *
+ * Examples with value=3:
+ *   1 die  → 3 × 1 = 3
+ *   2 dice → (3+3) × 2 = 12
+ *   3 dice → (3+3+3) × 3 = 27
+ */
 export function calcColumnScore(column) {
   const counts = {}
   for (const val of column) {
