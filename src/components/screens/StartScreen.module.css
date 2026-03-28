@@ -1,3 +1,27 @@
+/* Language toggle button — absolute top-right */
+.localeBtn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 10;
+  background: transparent;
+  border: 1.5px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.localeBtn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
 .screen {
   width: 100%;
   height: 100%;

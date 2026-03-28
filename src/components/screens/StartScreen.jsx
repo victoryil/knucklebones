@@ -3,25 +3,38 @@ import { Button } from '@/components/ui/Button.jsx'
 import { t } from '@/i18n/index.js'
 import styles from './StartScreen.module.css'
 
-export function StartScreen({ onStart }) {
+export function StartScreen({ onStart, locale, onToggleLocale }) {
   const [p1, setP1] = useState('')
   const [p2, setP2] = useState('')
 
   const handleStart = () => {
     onStart({
-      playerNames: [p1.trim() || 'Jugador 1', p2.trim() || 'Jugador 2'],
+      playerNames: [
+        p1.trim() || t('start.player1_placeholder'),
+        p2.trim() || t('start.player2_placeholder'),
+      ],
       mode: 'local',
     })
   }
 
   return (
     <div className={styles.screen}>
-      {/* Background ambient particles */}
+      {/* Ambient particles */}
       <div className={styles.particles} aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className={styles.particle} style={{ '--i': i }} />
         ))}
       </div>
+
+      {/* Language toggle — top-right corner */}
+      <button
+        className={styles.localeBtn}
+        onClick={onToggleLocale}
+        aria-label={locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+        title={locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+      >
+        {locale === 'es' ? 'EN' : 'ES'}
+      </button>
 
       <main className={styles.main}>
         {/* Logo */}
@@ -33,7 +46,7 @@ export function StartScreen({ onStart }) {
           <p className={styles.subtitle}>{t('start.subtitle')}</p>
         </div>
 
-        {/* Player name inputs */}
+        {/* Player names */}
         <div className={styles.namesArea}>
           <div className={styles.nameField}>
             <label className={styles.nameLabel} htmlFor="p1name">
@@ -85,7 +98,6 @@ export function StartScreen({ onStart }) {
         </div>
       </main>
 
-      {/* Footer disclaimer */}
       <footer className={styles.footer}>
         <p>{t('disclaimer.text')}</p>
       </footer>

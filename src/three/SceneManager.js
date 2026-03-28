@@ -61,11 +61,23 @@ function createDiceMesh(faceValue) {
   return mesh
 }
 
-/** Update the 4 side-face materials of a die mesh to the given THREE.Color. */
-function applySideColor(mesh, color) {
-  for (const idx of [0, 1, 4, 5]) {
-    mesh.material[idx].color.set(color)
+/**
+ * Tint all visible faces of a die mesh based on its multiplier count.
+ * count 1 → normal parchment / no tint on top texture
+ * count 2 → gold tint on sides AND top texture
+ * count 3 → blue tint on sides AND top texture
+ *
+ * Three.js multiplies material.color with the texture map, so white (0xffffff)
+ * = no tint, any other colour tints the texture.
+ */
+function applyMultiplierColor(mesh, count) {
+  const sideCol = sideColor(count)
+  // Side faces + bottom
+  for (const idx of [0, 1, 3, 4, 5]) {
+    mesh.material[idx].color.set(sideCol)
   }
+  // Top face (idx 2): white = texture unmodified, gold/blue = tinted over the skulls
+  mesh.material[2].color.set(count >= 2 ? sideCol : new THREE.Color(0xffffff))
 }
 
 // ── Particles ─────────────────────────────────────────────────────────────────
@@ -269,7 +281,7 @@ export class SceneManager {
           const entry = this._diceMap.get(key)
           if (!entry) continue
           const count = counts[val] ?? 1
-          applySideColor(entry.mesh, sideColor(count))
+          applyMultiplierColor(entry.mesh, count)
         }
       }
     }
