@@ -1,15 +1,27 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PlayerPanel } from '@/components/game/PlayerPanel.jsx'
+import { InfoModal, InfoButton } from '@/components/ui/InfoModal.jsx'
 import { useThreeScene } from '@/hooks/useThreeScene.js'
 import { PHASES } from '@/game/constants.js'
+import { playDestruction } from '@/audio/soundManager.js'
 import { t } from '@/i18n/index.js'
 import styles from './GameScreen.module.css'
 
 export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) {
-  const { phase, currentPlayer, boards, scores, columnScores, currentRoll, playerNames } = state
-  const canvasRef = useRef(null)
+  const { phase, currentPlayer, boards, scores, columnScores, currentRoll, playerNames, lastDestroyed } = state
+  const canvasRef    = useRef(null)
+  const [showInfo, setShowInfo] = useState(false)
 
   useThreeScene(canvasRef, boards)
+
+  // Play destruction sound whenever lastDestroyed has entries
+  const prevDestroyedRef = useRef([])
+  useEffect(() => {
+    if (lastDestroyed.length > 0 && lastDestroyed !== prevDestroyedRef.current) {
+      playDestruction()
+    }
+    prevDestroyedRef.current = lastDestroyed
+  }, [lastDestroyed])
 
   // Advance animation phase after a short delay
   useEffect(() => {
@@ -27,12 +39,14 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
         style={{ '--tc': currentPlayer === 0 ? 'var(--p1-color)' : 'var(--p2-color)' }}
       >
         <span>{t('game.turn_of')} <strong>{playerNames[currentPlayer]}</strong></span>
-        <button className={styles.menuBtn} onClick={onMenu}>Menú</button>
+        <div className={styles.stripRight}>
+          <InfoButton onClick={() => setShowInfo(true)} />
+          <button className={styles.menuBtn} onClick={onMenu}>Menú</button>
+        </div>
       </div>
 
-      {/* Main layout: side panel | canvas | side panel */}
+      {/* Main layout: panel | canvas | panel */}
       <div className={styles.main}>
-        {/* P0 panel (left) */}
         <PlayerPanel
           playerIndex={0}
           playerName={playerNames[0]}
@@ -46,12 +60,10 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
           onPlace={onPlace}
         />
 
-        {/* 3D canvas */}
         <div className={styles.canvasWrap}>
           <canvas ref={canvasRef} className={styles.canvas} />
         </div>
 
-        {/* P1 panel (right) */}
         <PlayerPanel
           playerIndex={1}
           playerName={playerNames[1]}
@@ -65,6 +77,9 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
           onPlace={onPlace}
         />
       </div>
+
+      {/* Rules modal */}
+      {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
     </div>
   )
 }
