@@ -3,11 +3,15 @@ import { SceneManager } from '@/three/SceneManager.js'
 
 /**
  * Mounts a Three.js SceneManager on the given canvas ref.
- * Syncs boards whenever boards prop changes.
+ *
+ * @param {React.RefObject} canvasRef
+ * @param {Array}           boards        3D board state (synced to the scene)
+ * @param {object}          interaction   { phase, currentPlayer, onPlace }
  */
-export function useThreeScene(canvasRef, boards) {
+export function useThreeScene(canvasRef, boards, interaction = {}) {
   const managerRef = useRef(null)
 
+  // Mount / unmount
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -16,7 +20,6 @@ export function useThreeScene(canvasRef, boards) {
     manager.init()
     managerRef.current = manager
 
-    // ResizeObserver for responsive canvas
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect
@@ -32,12 +35,24 @@ export function useThreeScene(canvasRef, boards) {
     }
   }, [canvasRef])
 
-  // Sync boards whenever they change
+  // Sync board state
   useEffect(() => {
     if (managerRef.current && boards) {
       managerRef.current.syncBoards(boards)
     }
   }, [boards])
+
+  // Sync interaction state (phase, active player, onPlace callback)
+  const { phase, currentPlayer, onPlace } = interaction
+  useEffect(() => {
+    if (!managerRef.current) return
+    managerRef.current.setInteraction(
+      currentPlayer ?? 0,
+      phase === 'placing',
+      onPlace ?? null,
+      boards ?? null,
+    )
+  }, [phase, currentPlayer, onPlace, boards])
 
   return managerRef
 }
