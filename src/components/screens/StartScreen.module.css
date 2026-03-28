@@ -1,0 +1,211 @@
+.screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: radial-gradient(ellipse at 50% 0%, #2a0a4a 0%, #0d0118 60%);
+  overflow-y: auto;
+  padding: 24px 16px 16px;
+  position: relative;
+}
+
+/* Ambient particles */
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  opacity: 0;
+  left: calc(var(--i) * 8.3%);
+  bottom: 0;
+  animation: floatUp calc(4s + var(--i) * 0.7s) ease-in infinite;
+  animation-delay: calc(var(--i) * 0.5s);
+}
+
+@keyframes floatUp {
+  0%   { transform: translateY(0) scale(1); opacity: 0.7; }
+  100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  width: 100%;
+  max-width: 480px;
+  flex: 1;
+  justify-content: center;
+  padding: 20px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.logoArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.skullDecor {
+  animation: skullPulse 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 16px rgba(201, 168, 76, 0.6));
+}
+
+@keyframes skullPulse {
+  0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 0 12px rgba(201,168,76,0.5)); }
+  50%       { transform: scale(1.06) translateY(-3px); filter: drop-shadow(0 0 24px rgba(201,168,76,0.8)); }
+}
+
+.title {
+  font-family: var(--font-title);
+  font-size: clamp(2.2rem, 8vw, 4rem);
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  text-shadow:
+    0 0 20px rgba(201, 168, 76, 0.7),
+    0 0 60px rgba(201, 168, 76, 0.3),
+    2px 2px 0 rgba(0,0,0,0.8);
+  line-height: 1;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 320px;
+  font-style: italic;
+}
+
+/* Name inputs */
+.namesArea {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.nameField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nameLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.playerDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.nameInput {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 10px 14px;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.nameInput::placeholder {
+  color: var(--text-dim);
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+/* Buttons */
+.buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.mainBtn {
+  width: 100%;
+  padding: 16px 28px;
+  font-size: 1.05rem;
+}
+
+.soonGroup {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.tooltipWrap {
+  position: relative;
+  flex: 1;
+}
+
+.tooltipWrap > button {
+  width: 100%;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-mid);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tooltipWrap:hover .tooltip {
+  opacity: 1;
+}
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  text-align: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.footer p {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}

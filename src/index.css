@@ -1,0 +1,77 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-dark: #0d0118;
+  --bg-mid: #1a0a2e;
+  --bg-light: #2a1040;
+  --accent-gold: #c9a84c;
+  --accent-gold-bright: #f0d070;
+  --accent-red: #8b1a1a;
+  --accent-red-bright: #cc3333;
+  --text-primary: #e8d5b0;
+  --text-secondary: #9a8070;
+  --text-dim: #5a4a3a;
+  --border-color: #3a2050;
+  --border-gold: #6a5020;
+  --slot-empty: #180828;
+  --slot-border: #3a2050;
+  --p1-color: #4a8fff;
+  --p2-color: #ff4a6a;
+  --font-title: 'Cinzel Decorative', 'Cinzel', serif;
+  --font-heading: 'Cinzel', serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+  border: none;
+  outline: none;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+input {
+  font-family: var(--font-body);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+/* Utility */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}

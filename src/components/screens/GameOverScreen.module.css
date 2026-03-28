@@ -1,0 +1,173 @@
+.screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 50%, #2a0a4a 0%, #0d0118 70%);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 480px;
+  width: 100%;
+  padding: 32px 24px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  box-shadow: 0 0 60px rgba(201, 168, 76, 0.1), 0 20px 40px rgba(0,0,0,0.5);
+}
+
+.trophy {
+  animation: trophyBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  filter: drop-shadow(0 0 20px rgba(201, 168, 76, 0.6));
+}
+
+@keyframes trophyBounce {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.title {
+  font-family: var(--font-title);
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--accent-gold-bright);
+  text-align: center;
+  text-shadow: 0 0 20px rgba(201, 168, 76, 0.5);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s 0.2s, transform 0.5s 0.2s;
+}
+
+.score {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s 0.35s, transform 0.5s 0.35s;
+}
+
+.revealed {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.finalScores {
+  width: 100%;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s 0.5s, transform 0.5s 0.5s;
+}
+
+.scoresTitle {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.scoresGrid {
+  display: flex;
+  gap: 10px;
+}
+
+.playerResult {
+  flex: 1;
+  position: relative;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.3s;
+}
+
+.winner {
+  border-color: var(--accent-gold);
+  background: rgba(201, 168, 76, 0.06);
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.2);
+  animation: winnerShine 2s ease-in-out infinite;
+}
+
+@keyframes winnerShine {
+  0%, 100% { box-shadow: 0 0 16px rgba(201,168,76,0.2); }
+  50%       { box-shadow: 0 0 32px rgba(201,168,76,0.5); }
+}
+
+.winnerLabel {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-gold);
+  color: #1a0a1e;
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.playerName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.playerDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pc);
+}
+
+.playerScore {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--pc, var(--accent-gold));
+  line-height: 1;
+}
+
+.colBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.colChip {
+  font-size: 0.65rem;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 2px 6px;
+  color: var(--text-secondary);
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}

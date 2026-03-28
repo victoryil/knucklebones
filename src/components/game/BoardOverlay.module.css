@@ -1,0 +1,141 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  padding: 8px;
+  gap: 0;
+}
+
+.divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+  margin: 4px 0;
+}
+
+.boardGrid {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.boardGrid.flipped {
+  flex-direction: row-reverse;
+}
+
+.boardActive {
+  background: rgba(201, 168, 76, 0.04);
+}
+
+.column {
+  flex: 1;
+  max-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: all;
+}
+
+.colScoreBadge {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--pc, var(--accent-gold));
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1px 8px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.slot {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty {
+  background: var(--slot-empty);
+  border: 1px dashed var(--slot-border);
+}
+
+.filled {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-gold);
+}
+
+/* Dice mini — value number in a parchment-colored box */
+.diceMini {
+  width: 80%;
+  aspect-ratio: 1;
+  background: linear-gradient(145deg, #f5ead8, #dfc89a);
+  border-radius: 20%;
+  border: 1.5px solid #b8a080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #1a0a1e;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* Column select button */
+.colBtn {
+  width: 100%;
+  padding: 6px 4px;
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid var(--accent-gold);
+  border-radius: 4px;
+  color: var(--accent-gold-bright);
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.15s;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.colBtn:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.3);
+  transform: scale(1.04);
+}
+
+.colBtn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.colBtnFull {
+  background: rgba(255,255,255,0.03);
+  border-color: var(--border-color);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* Flipped board: column button on top */
+.flipped .column {
+  flex-direction: column-reverse;
+}
+
+@media (max-width: 480px) {
+  .boardGrid { gap: 4px; padding: 4px 6px; }
+  .diceMini { font-size: 0.7rem; }
+  .colBtn { padding: 5px 2px; font-size: 0.65rem; }
+}

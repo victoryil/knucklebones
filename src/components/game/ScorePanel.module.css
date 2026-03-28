@@ -1,0 +1,76 @@
+.panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  transition: border-color 0.2s, background 0.2s;
+  min-width: 130px;
+}
+
+.active {
+  border-color: var(--player-color, var(--accent-gold));
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.15);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--player-color);
+  flex-shrink: 0;
+}
+
+.name {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.total {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--accent-gold-bright);
+}
+
+.cols {
+  display: flex;
+  gap: 6px;
+}
+
+.colScore {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+  padding: 4px 2px;
+}
+
+.colLabel {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.colVal {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
