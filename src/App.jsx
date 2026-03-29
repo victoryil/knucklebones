@@ -3,6 +3,7 @@ import { StartScreen } from '@/components/screens/StartScreen.jsx'
 import { GameScreen } from '@/components/screens/GameScreen.jsx'
 import { GameOverScreen } from '@/components/screens/GameOverScreen.jsx'
 import { useGameReducer } from '@/hooks/useGameReducer.js'
+import { audioEngine } from '@/audio/AudioEngine.js'
 import { disconnect } from '@/network/networkInterface.js'
 import { PHASES } from '@/game/constants.js'
 import { setLocale as i18nSetLocale, getCurrentLocale } from '@/i18n/index.js'
@@ -16,6 +17,13 @@ export default function App() {
   const [playerIndex, setPlayerIndex] = useState(0)
 
   const { state, startGame, rollDice, placeDice, animationDone, resetGame, networkError, clearNetworkError } = useGameReducer()
+
+  // Initialize AudioEngine on first user interaction (browser autoplay policy)
+  useEffect(() => {
+    const init = () => { audioEngine.init(); document.removeEventListener('click', init) }
+    document.addEventListener('click', init)
+    return () => document.removeEventListener('click', init)
+  }, [])
 
   const handleToggleLocale = useCallback(() => {
     const next = locale === 'es' ? 'en' : 'es'

@@ -46,6 +46,19 @@
   color: var(--tc, var(--accent-gold));
 }
 
+.settingsBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  padding: 3px 8px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s, border-color 0.15s;
+}
+.settingsBtn:hover { color: var(--accent-gold); border-color: var(--accent-gold); }
+
 .menuBtn {
   background: transparent;
   border: 1px solid var(--border-color);

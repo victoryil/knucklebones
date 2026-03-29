@@ -1,24 +1,35 @@
+import { useEffect, useRef, useState } from 'react'
 import { DiceDisplay } from './DiceDisplay.jsx'
 import { isColumnFull } from '@/game/constants.js'
 import { t } from '@/i18n/index.js'
 import styles from './PlayerPanel.module.css'
 
-/**
- * Side panel for one player.
- * Shows name, score, the current rolled die, and action buttons.
- *
- * @param {object}   props
- * @param {number}   props.playerIndex     0 or 1
- * @param {string}   props.playerName
- * @param {number}   props.totalScore
- * @param {number[]} props.columnScores    array of 3 values
- * @param {boolean}  props.isMyTurn        true when this player is the active one
- * @param {'rolling'|'placing'|'animating'|'gameover'} props.phase
- * @param {number|null} props.currentRoll  null when no die rolled yet
- * @param {Array}    props.board           3 columns × 3 slots for this player
- * @param {()=>void} props.onRoll
- * @param {(col:number)=>void} props.onPlace
- */
+/** Animates a number from its previous value to `target` over `duration` ms */
+function useCountUp(target, duration = 600) {
+  const [display, setDisplay] = useState(target)
+  const prevRef = useRef(target)
+
+  useEffect(() => {
+    const prev = prevRef.current
+    if (prev === target) return
+    prevRef.current = target
+
+    const startTime = performance.now()
+    const diff = target - prev
+
+    const animate = (now) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3) // easeOutCubic
+      setDisplay(Math.round(prev + diff * eased))
+      if (progress < 1) requestAnimationFrame(animate)
+    }
+    requestAnimationFrame(animate)
+  }, [target, duration])
+
+  return display
+}
+
 export function PlayerPanel({
   playerIndex,
   playerName,
@@ -30,28 +41,37 @@ export function PlayerPanel({
   board,
   onRoll,
   onPlace,
-  isBot = false,   // hides interactive controls for the bot player
+  isBot = false,
 }) {
-  const canRoll  = isMyTurn && phase === 'rolling'  && !isBot
-  const canPlace = isMyTurn && phase === 'placing'  && !isBot
+  const canRoll  = isMyTurn && phase === 'rolling' && !isBot
+  const canPlace = isMyTurn && phase === 'placing' && !isBot
   const color    = playerIndex === 0 ? 'var(--p1-color)' : 'var(--p2-color)'
+  const scoreDisplay = useCountUp(totalScore)
 
   return (
     <aside
-      className={`${styles.panel} ${isMyTurn ? styles.active : ''}`}
+      className={`${styles.panel} ${isMyTurn ? styles.active : styles.inactive}`}
       style={{ '--pc': color }}
       aria-label={`Panel de ${playerName}`}
     >
       {/* Player header */}
       <div className={styles.header}>
         <span className={styles.dot} />
-        <span className={styles.name}>{playerName}</span>
+        <span className={`${styles.name} ${isMyTurn ? styles.nameActive : ''}`}>
+          {isMyTurn && <span className={styles.flame} aria-hidden="true">🔥</span>}
+          {playerName}
+        </span>
       </div>
 
       {/* Score */}
       <div className={styles.scoreRow}>
         <span className={styles.scoreLabel}>{t('game.score')}</span>
-        <span className={styles.scoreValue}>{totalScore}</span>
+        <span
+          className={styles.scoreValue}
+          style={{ color: playerIndex === 0 ? '#c8860a' : '#c41e3a' }}
+        >
+          {scoreDisplay}
+        </span>
       </div>
 
       {/* Column scores */}
@@ -64,7 +84,6 @@ export function PlayerPanel({
         ))}
       </div>
 
-      {/* Divider */}
       <div className={styles.divider} />
 
       {/* Die box */}
@@ -81,7 +100,7 @@ export function PlayerPanel({
         )}
       </div>
 
-      {/* Roll button — hidden for bot */}
+      {/* Roll button */}
       {!isBot && (
         <button
           className={`${styles.rollBtn} ${!canRoll ? styles.disabled : ''}`}
@@ -93,11 +112,11 @@ export function PlayerPanel({
         </button>
       )}
 
-      {/* Column select buttons — hidden for bot */}
+      {/* Column select buttons */}
       <div className={styles.colBtns} style={isBot ? { visibility: 'hidden' } : undefined}>
         {board.map((col, ci) => {
-          const full     = isColumnFull(col)
-          const enabled  = canPlace && !full
+          const full    = isColumnFull(col)
+          const enabled = canPlace && !full
           return (
             <button
               key={ci}

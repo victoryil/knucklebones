@@ -17,6 +17,11 @@
   box-shadow: 0 0 14px rgba(255,255,255,0.04);
 }
 
+.inactive {
+  opacity: 0.65;
+  transition: opacity 0.3s;
+}
+
 /* Header */
 .header {
   display: flex;
@@ -41,6 +46,24 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: text-shadow 0.3s;
+}
+
+.nameActive {
+  text-shadow: 0 0 12px #ff3333;
+}
+
+.flame {
+  display: inline-block;
+  margin-right: 3px;
+  font-size: 0.8rem;
+  animation: flamePulse 0.7s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+
+@keyframes flamePulse {
+  from { transform: scaleY(1) rotate(-3deg); }
+  to   { transform: scaleY(1.18) rotate(3deg); }
 }
 
 /* Score */

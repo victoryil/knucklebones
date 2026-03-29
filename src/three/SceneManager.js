@@ -1,5 +1,9 @@
 import * as THREE from 'three'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass }     from 'three/addons/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { generateFaceTexture, preloadFaceTextures } from './TextureGenerator.js'
+import { settings } from '@/settings/store.js'
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 const DICE_SIZE    = 0.78
@@ -18,10 +22,9 @@ function slotPosition(player, col, slot) {
   return new THREE.Vector3(x, y, z)
 }
 
-// Derived layout values used for hit areas and highlights
-const COL_Z_CENTER = (slotZ(0) + slotZ(2)) / 2                      // 2.60
-const COL_DEPTH    = slotZ(2) - slotZ(0) + DICE_SIZE + 0.5          // 3.28
-const COL_WIDTH    = COL_SPACING - 0.06                              // 1.19
+const COL_Z_CENTER = (slotZ(0) + slotZ(2)) / 2
+const COL_DEPTH    = slotZ(2) - slotZ(0) + DICE_SIZE + 0.5
+const COL_WIDTH    = COL_SPACING - 0.06
 
 // ── Multiplier colours ────────────────────────────────────────────────────────
 const COLOR_NORMAL = new THREE.Color(0xf0e4c4)
@@ -34,7 +37,6 @@ function sideColor(count) {
   return COLOR_NORMAL
 }
 
-// ── Rest rotation ─────────────────────────────────────────────────────────────
 function randomRestRotation() {
   return {
     x: (Math.random() - 0.5) * 0.14,
@@ -43,7 +45,6 @@ function randomRestRotation() {
   }
 }
 
-// ── Materials ─────────────────────────────────────────────────────────────────
 function makeSideMat(color = COLOR_NORMAL) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0 })
 }
@@ -74,7 +75,8 @@ function applyMultiplierColor(mesh, count) {
 // ── Particles ─────────────────────────────────────────────────────────────────
 const PARTICLE_COLORS = [0xc9a84c, 0xffd060, 0xff8844, 0xffffff]
 
-function spawnParticles(scene, origin, list) {
+function spawnParticles(scene, origin, list, enabled) {
+  if (!enabled) return
   for (let i = 0; i < 10; i++) {
     const mat  = new THREE.MeshBasicMaterial({ color: PARTICLE_COLORS[i % 4], transparent: true, opacity: 1 })
     const size = 0.04 + Math.random() * 0.06
@@ -99,19 +101,29 @@ export class SceneManager {
     this._particles  = []
     this._rafId      = null
     this._ready      = false
+    this._fastAnimations = false
 
-    // Interaction state
     this._raycaster   = new THREE.Raycaster()
-    this._mouseNDC    = new THREE.Vector2(-9, -9)  // off-screen default
-    this._hitAreas    = []   // { mesh, player, col }
-    this._highlights  = []   // { mesh, player, col }
-    this._hoveredCol  = null // { player, col } | null
+    this._hitAreas    = []
+    this._highlights  = []
+    this._hoveredCol  = null
     this._interacting = false
     this._iPlayer     = 0
     this._iBoards     = null
     this._onPlace     = null
 
-    // Bind event handlers so we can remove them later
+    this._camBasePos = new THREE.Vector3(0, 11, 4)
+
+    // Shake state
+    this._shakeActive    = false
+    this._shakeIntensity = 0
+    this._shakeEndTime   = 0
+
+    // Bloom tween
+    this._bloomTarget   = 0.4
+    this._bloomCurrent  = 0.4
+    this._bloomTweenEnd = 0
+
     this._handleMove  = this._onPointerMove.bind(this)
     this._handleDown  = this._onPointerDown.bind(this)
     this._handleLeave = this._onPointerLeave.bind(this)
@@ -123,32 +135,61 @@ export class SceneManager {
     const w      = rect.width  || 800
     const h      = rect.height || 600
 
-    this._renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+    // ── Renderer ──────────────────────────────────────────────────────────────
+    this._renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: settings.quality !== 'low',
+      alpha: false,
+    })
     this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this._renderer.setSize(w, h, false)
-    this._renderer.shadowMap.enabled = true
+    this._renderer.setClearColor(0x05020d, 1)
+    this._renderer.shadowMap.enabled = settings.quality !== 'low'
     this._renderer.shadowMap.type    = THREE.PCFSoftShadowMap
+    this._renderer.toneMapping       = THREE.ACESFilmicToneMapping
+    this._renderer.toneMappingExposure = 1.1
 
-    this._scene  = new THREE.Scene()
+    this._scene = new THREE.Scene()
+    this._scene.background = new THREE.Color(0x05020d)
 
-    this._camera = new THREE.PerspectiveCamera(48, w / h, 0.1, 100)
-    this._camera.position.set(0, 9, 6)
+    // ── Camera ────────────────────────────────────────────────────────────────
+    this._camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100)
+    this._camera.position.copy(this._camBasePos)
     this._camera.lookAt(0, 0, 0)
 
-    this._scene.add(new THREE.AmbientLight(0xfff8ee, 0.9))
-    const sun = new THREE.DirectionalLight(0xfff0dd, 1.1)
-    sun.position.set(3, 10, 5)
-    sun.castShadow           = true
-    sun.shadow.mapSize.width  = 1024
-    sun.shadow.mapSize.height = 1024
-    sun.shadow.camera.near   = 1
-    sun.shadow.camera.far    = 25
-    sun.shadow.camera.left   = -8
-    sun.shadow.camera.right  =  8
-    sun.shadow.camera.top    =  8
-    sun.shadow.camera.bottom = -8
-    this._scene.add(sun)
+    // ── Lighting ──────────────────────────────────────────────────────────────
+    this._scene.add(new THREE.AmbientLight(0x1a0808, 0.3))
 
+    const redLight = new THREE.PointLight(0x8b0000, 1.5, 20)
+    redLight.position.set(0, 8, 2)
+    redLight.castShadow = settings.quality !== 'low'
+    if (redLight.castShadow) {
+      redLight.shadow.mapSize.width  = 1024
+      redLight.shadow.mapSize.height = 1024
+    }
+    this._scene.add(redLight)
+
+    const goldLight = new THREE.PointLight(0xc8860a, 0.4, 15)
+    goldLight.position.set(-3, 4, -1)
+    this._scene.add(goldLight)
+
+    const blueLight = new THREE.PointLight(0x080820, 0.6, 18)
+    blueLight.position.set(3, 3, 3)
+    this._scene.add(blueLight)
+
+    // ── Post-processing ───────────────────────────────────────────────────────
+    this._composer = new EffectComposer(this._renderer)
+    this._composer.addPass(new RenderPass(this._scene, this._camera))
+
+    const bloomStr = settings.quality === 'low' ? 0 : settings.quality === 'medium' ? 0.2 : 0.4
+    this._bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), bloomStr, 0.3, 0.85)
+    this._bloomPass.enabled = settings.bloomEnabled && settings.quality !== 'low'
+    this._bloomTarget  = bloomStr
+    this._bloomCurrent = bloomStr
+    this._composer.addPass(this._bloomPass)
+
+    // ── Scene ─────────────────────────────────────────────────────────────────
+    this._buildFloor()
     this._buildBoards()
     this._buildHitAreas()
     preloadFaceTextures()
@@ -161,7 +202,31 @@ export class SceneManager {
     this._startLoop()
   }
 
-  // ── Static board geometry ─────────────────────────────────────────────────
+  _buildFloor() {
+    const fc = document.createElement('canvas')
+    fc.width = fc.height = 512
+    const fCtx = fc.getContext('2d')
+    fCtx.fillStyle = '#050210'
+    fCtx.fillRect(0, 0, 512, 512)
+    for (let i = 0; i < 2000; i++) {
+      const a = Math.random() * 0.04
+      fCtx.fillStyle = `rgba(180,160,100,${a})`
+      fCtx.fillRect(Math.random() * 512, Math.random() * 512, Math.random() * 6 + 1, 1)
+    }
+    const tex = new THREE.CanvasTexture(fc)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(3, 5)
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 30),
+      new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 }),
+    )
+    floor.rotation.x = -Math.PI / 2
+    floor.position.y = -0.08
+    floor.receiveShadow = true
+    this._scene.add(floor)
+  }
+
   _buildBoards() {
     const BOARD_W  = COL_SPACING * 2 + DICE_SIZE + 0.7
     const slotFar  = slotZ(2) + DICE_SIZE / 2 + 0.25
@@ -175,37 +240,49 @@ export class SceneManager {
 
       const board = new THREE.Mesh(
         new THREE.BoxGeometry(BOARD_W, 0.12, depth),
-        new THREE.MeshStandardMaterial({ color: player === 0 ? 0x1a0c30 : 0x2a0c18, roughness: 0.85 }),
+        new THREE.MeshStandardMaterial({ color: player === 0 ? 0x060d1f : 0x1f0606, roughness: 0.85 }),
       )
       board.position.set(0, -0.06, zCtr)
       board.receiveShadow = true
       this._scene.add(board)
 
+      const slotBaseColor   = player === 0 ? 0x0a1535 : 0x350a0a
+      const slotBorderColor = player === 0 ? 0x1a3a6a : 0x6a1a1a
+
       for (let c = 0; c < 3; c++) {
         for (let s = 0; s < 3; s++) {
-          const pos    = slotPosition(player, c, s)
+          const pos = slotPosition(player, c, s)
+
           const marker = new THREE.Mesh(
-            new THREE.BoxGeometry(DICE_SIZE + 0.08, 0.04, DICE_SIZE + 0.08),
-            new THREE.MeshStandardMaterial({ color: player === 0 ? 0x3a1a5a : 0x5a1a2a, roughness: 0.9 }),
+            new THREE.BoxGeometry(DICE_SIZE + 0.1, 0.04, DICE_SIZE + 0.1),
+            new THREE.MeshStandardMaterial({ color: slotBaseColor, roughness: 0.9 }),
           )
           marker.position.set(pos.x, 0.02, pos.z)
           marker.receiveShadow = true
           this._scene.add(marker)
+
+          const ring = new THREE.Mesh(
+            new THREE.BoxGeometry(DICE_SIZE + 0.18, 0.03, DICE_SIZE + 0.18),
+            new THREE.MeshStandardMaterial({ color: slotBorderColor, roughness: 0.9 }),
+          )
+          ring.position.set(pos.x, 0.015, pos.z)
+          this._scene.add(ring)
         }
       }
 
+      const divColor = player === 0 ? 0x1a3a6a : 0x6a1a1a
       for (let c = 0; c < 2; c++) {
         const div = new THREE.Mesh(
           new THREE.BoxGeometry(0.06, 0.18, depth - 0.2),
-          new THREE.MeshStandardMaterial({ color: player === 0 ? 0x4a2060 : 0x6a2030, roughness: 0.9 }),
+          new THREE.MeshStandardMaterial({ color: divColor, roughness: 0.9 }),
         )
         div.position.set((c - 0.5) * COL_SPACING, 0.09, zCtr)
         this._scene.add(div)
       }
 
       const edges = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(BOARD_W + 0.04, 0.16, depth + 0.04)),
-        new THREE.LineBasicMaterial({ color: player === 0 ? 0x6a3a80 : 0x803a4a }),
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(BOARD_W + 0.06, 0.17, depth + 0.06)),
+        new THREE.LineBasicMaterial({ color: 0xc8860a }),
       )
       edges.position.set(0, -0.02, zCtr)
       this._scene.add(edges)
@@ -216,23 +293,19 @@ export class SceneManager {
         new THREE.Vector3(-(COL_SPACING + DICE_SIZE * 0.5 + 0.35), 0.01, 0),
         new THREE.Vector3( (COL_SPACING + DICE_SIZE * 0.5 + 0.35), 0.01, 0),
       ]),
-      new THREE.LineBasicMaterial({ color: 0x4a3060 }),
+      new THREE.LineBasicMaterial({ color: 0xc8860a }),
     ))
   }
 
-  // ── Hit areas + highlight meshes ──────────────────────────────────────────
   _buildHitAreas() {
-    // Player colours for the highlight overlay
     const playerColor = [0x4488ff, 0xff4466]
 
     for (const player of [0, 1]) {
       const zSign = player === 0 ? 1 : -1
-
       for (let col = 0; col < 3; col++) {
         const x = (col - 1) * COL_SPACING
         const z = COL_Z_CENTER * zSign
 
-        // Invisible flat plane used for raycasting
         const hitMesh = new THREE.Mesh(
           new THREE.PlaneGeometry(COL_WIDTH, COL_DEPTH),
           new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }),
@@ -242,14 +315,10 @@ export class SceneManager {
         this._scene.add(hitMesh)
         this._hitAreas.push({ mesh: hitMesh, player, col })
 
-        // Translucent highlight box shown on hover
         const hlMesh = new THREE.Mesh(
           new THREE.BoxGeometry(COL_WIDTH, 0.08, COL_DEPTH),
           new THREE.MeshBasicMaterial({
-            color:      playerColor[player],
-            transparent: true,
-            opacity:     0,
-            depthWrite:  false,
+            color: playerColor[player], transparent: true, opacity: 0, depthWrite: false,
           }),
         )
         hlMesh.position.set(x, 0.1, z)
@@ -260,23 +329,12 @@ export class SceneManager {
   }
 
   // ── Interaction API ───────────────────────────────────────────────────────
-  /**
-   * Call this every time phase / currentPlayer changes.
-   * @param {number}   player    0 or 1
-   * @param {boolean}  placing   true when phase === 'placing'
-   * @param {Function} onPlace   (col: number) => void
-   * @param {Array}    boards    current board state (to detect full columns)
-   */
   setInteraction(player, placing, onPlace, boards) {
     this._iPlayer     = player
     this._interacting = placing
     this._onPlace     = onPlace
     this._iBoards     = boards
-
-    if (!placing) {
-      this._clearHighlights()
-      this._canvas.style.cursor = ''
-    }
+    if (!placing) { this._clearHighlights(); this._canvas.style.cursor = '' }
   }
 
   _clearHighlights() {
@@ -284,7 +342,6 @@ export class SceneManager {
     this._hoveredCol = null
   }
 
-  // ── Pointer events ────────────────────────────────────────────────────────
   _getNDC(e) {
     const rect = this._canvas.getBoundingClientRect()
     return new THREE.Vector2(
@@ -308,11 +365,9 @@ export class SceneManager {
 
   _onPointerMove(e) {
     if (!this._interacting) return
-    const ndc  = this._getNDC(e)
-    const hit  = this._raycastActivePlayer(ndc)
-
+    const ndc = this._getNDC(e)
+    const hit = this._raycastActivePlayer(ndc)
     this._clearHighlights()
-
     if (hit && !this._isColumnFull(hit.player, hit.col)) {
       const hl = this._highlights.find(h => h.player === hit.player && h.col === hit.col)
       if (hl) hl.mesh.material.opacity = 0.22
@@ -328,9 +383,7 @@ export class SceneManager {
     if (!this._interacting || e.button !== 0) return
     const ndc = this._getNDC(e)
     const hit = this._raycastActivePlayer(ndc)
-    if (hit && !this._isColumnFull(hit.player, hit.col)) {
-      this._onPlace?.(hit.col)
-    }
+    if (hit && !this._isColumnFull(hit.player, hit.col)) this._onPlace?.(hit.col)
   }
 
   _onPointerLeave() {
@@ -338,56 +391,72 @@ export class SceneManager {
     this._canvas.style.cursor = ''
   }
 
+  // ── Bloom / shake API ─────────────────────────────────────────────────────
+  triggerBloomPulse(strength = 1.2, holdMs = 300, returnTo = 0.4) {
+    if (!this._bloomPass?.enabled) return
+    this._bloomPass.strength = strength
+    this._bloomCurrent = strength
+    this._bloomTarget  = returnTo
+    this._bloomTweenEnd = performance.now() + holdMs
+  }
+
+  triggerShake(intensity = 0.08, duration = 200) {
+    if (!settings.shakeEnabled) return
+    this._shakeIntensity = intensity
+    this._shakeEndTime   = performance.now() + duration
+    this._shakeActive    = true
+  }
+
+  setBloomEnabled(enabled) {
+    if (this._bloomPass) this._bloomPass.enabled = enabled
+  }
+
+  setQuality(quality) {
+    const bloomStr = quality === 'low' ? 0 : quality === 'medium' ? 0.2 : 0.4
+    this._bloomTarget  = bloomStr
+    this._bloomCurrent = bloomStr
+    if (this._bloomPass) {
+      this._bloomPass.strength = bloomStr
+      this._bloomPass.enabled  = settings.bloomEnabled && quality !== 'low'
+    }
+    this._renderer.shadowMap.enabled = quality !== 'low'
+  }
+
+  setFastAnimations(fast) {
+    this._fastAnimations = fast
+  }
+
   // ── Board sync ────────────────────────────────────────────────────────────
-  /**
-   * Synchronise the 3D scene with the new board state.
-   *
-   * Three-step process to handle destruction + compaction correctly:
-   *   1. Remove explicitly destroyed dice (with particles). Their positions are
-   *      the PRE-COMPACT indices stored in lastDestroyed.
-   *   2. Slide surviving dice in affected columns to their compacted positions
-   *      by updating their target (the lerp animation takes care of movement).
-   *   3. Spawn new dice that don't yet have a mesh.
-   *
-   * @param {Array}  boards        new board state (already compacted in reducer)
-   * @param {Array}  lastDestroyed [{player, col, positions}] — original slot indices
-   */
   syncBoards(boards, lastDestroyed = []) {
     if (!this._ready) return
 
-    // ── Step 1: explicitly destroy flagged dice ──────────────────────────────
-    const compactCols = new Set()   // "p-c" pairs that need compaction
+    const compactCols = new Set()
     for (const { player: p, col: c, positions } of lastDestroyed) {
       compactCols.add(`${p}-${c}`)
       for (const s of positions) {
         const key   = `${p}-${c}-${s}`
         const entry = this._diceMap.get(key)
         if (!entry) continue
-        spawnParticles(this._scene, entry.mesh.position.clone(), this._particles)
+        spawnParticles(this._scene, entry.mesh.position.clone(), this._particles, settings.particlesEnabled)
         this._scene.remove(entry.mesh)
         this._diceMap.delete(key)
       }
     }
 
-    // ── Step 2: compact surviving dice towards slot 0 in affected columns ────
     for (const colKey of compactCols) {
       const [p, c] = colKey.split('-').map(Number)
-
-      // Gather surviving meshes in slot order
       const survivors = []
       for (let s = 0; s < 3; s++) {
         const key   = `${p}-${c}-${s}`
         const entry = this._diceMap.get(key)
         if (entry) { survivors.push(entry); this._diceMap.delete(key) }
       }
-      // Re-assign to compacted positions — animate via target lerp
       survivors.forEach((entry, newSlot) => {
         entry.target.copy(slotPosition(p, c, newSlot))
         this._diceMap.set(`${p}-${c}-${newSlot}`, entry)
       })
     }
 
-    // ── Step 3: spawn newly placed dice ──────────────────────────────────────
     for (let p = 0; p < 2; p++) {
       for (let c = 0; c < 3; c++) {
         for (let s = 0; s < 3; s++) {
@@ -397,11 +466,7 @@ export class SceneManager {
             const mesh   = createDiceMesh(val)
             const target = slotPosition(p, c, s)
             mesh.position.copy(target).setY(target.y + 5)
-            mesh.rotation.set(
-              Math.random() * Math.PI * 2,
-              Math.random() * Math.PI * 2,
-              Math.random() * Math.PI * 2,
-            )
+            mesh.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2)
             this._scene.add(mesh)
             this._diceMap.set(key, { mesh, target: target.clone(), rest: randomRestRotation() })
           }
@@ -409,7 +474,6 @@ export class SceneManager {
       }
     }
 
-    // ── Safety net: remove any stale meshes not represented in the board ─────
     const present = new Set()
     for (let p = 0; p < 2; p++)
       for (let c = 0; c < 3; c++)
@@ -417,16 +481,12 @@ export class SceneManager {
           if (boards[p][c][s] !== null) present.add(`${p}-${c}-${s}`)
 
     for (const [key, entry] of this._diceMap) {
-      if (!present.has(key)) {
-        this._scene.remove(entry.mesh)
-        this._diceMap.delete(key)
-      }
+      if (!present.has(key)) { this._scene.remove(entry.mesh); this._diceMap.delete(key) }
     }
 
     this._updateMultiplierColors(boards)
   }
 
-  // ── Multiplier colouring ──────────────────────────────────────────────────
   _updateMultiplierColors(boards) {
     for (let p = 0; p < 2; p++) {
       for (let c = 0; c < 3; c++) {
@@ -444,22 +504,21 @@ export class SceneManager {
     }
   }
 
-  // ── Render loop ───────────────────────────────────────────────────────────
   _startLoop() {
     let prev = performance.now()
     const loop = (now) => {
       const dt = Math.min((now - prev) / 1000, 0.05)
       prev = now
-      this._tick(dt)
-      this._renderer.render(this._scene, this._camera)
+      this._tick(dt, now)
+      this._composer.render()
       this._rafId = requestAnimationFrame(loop)
     }
     this._rafId = requestAnimationFrame(loop)
   }
 
-  _tick(dt) {
-    const POS_K = 10
-    const ROT_K = 6
+  _tick(dt, now) {
+    const POS_K = this._fastAnimations ? 40 : 10
+    const ROT_K = this._fastAnimations ? 25 : 6
 
     for (const { mesh, target, rest } of this._diceMap.values()) {
       mesh.position.lerp(target, 1 - Math.exp(-POS_K * dt))
@@ -477,12 +536,40 @@ export class SceneManager {
       if (p.life <= 0) { this._scene.remove(p.mesh); dead.push(p) }
     }
     if (dead.length) this._particles = this._particles.filter(p => !dead.includes(p))
+
+    // Bloom tween (tween back to target after hold period)
+    if (this._bloomPass?.enabled) {
+      if (now >= this._bloomTweenEnd && this._bloomCurrent !== this._bloomTarget) {
+        this._bloomCurrent = THREE.MathUtils.lerp(this._bloomCurrent, this._bloomTarget, 1 - Math.exp(-4 * dt))
+        this._bloomPass.strength = this._bloomCurrent
+        if (Math.abs(this._bloomCurrent - this._bloomTarget) < 0.001) {
+          this._bloomCurrent = this._bloomTarget
+        }
+      }
+    }
+
+    // Camera shake
+    if (this._shakeActive) {
+      const remaining = this._shakeEndTime - now
+      if (remaining > 0) {
+        const i = this._shakeIntensity
+        this._camera.position.x = this._camBasePos.x + (Math.random() - 0.5) * i * 2
+        this._camera.position.y = this._camBasePos.y + (Math.random() - 0.5) * i
+      } else {
+        this._camera.position.lerp(this._camBasePos, 1 - Math.exp(-12 * dt))
+        if (this._camera.position.distanceTo(this._camBasePos) < 0.002) {
+          this._camera.position.copy(this._camBasePos)
+          this._shakeActive = false
+        }
+      }
+    }
   }
 
-  // ── Resize / dispose ──────────────────────────────────────────────────────
   resize(w, h) {
     if (!this._ready || w < 1 || h < 1) return
     this._renderer.setSize(w, h, false)
+    this._composer.setSize(w, h)
+    if (this._bloomPass) this._bloomPass.resolution.set(w, h)
     this._camera.aspect = w / h
     this._camera.updateProjectionMatrix()
   }
