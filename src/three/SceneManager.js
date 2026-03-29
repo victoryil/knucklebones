@@ -1,7 +1,4 @@
 import * as THREE from 'three'
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
-import { RenderPass }     from 'three/addons/postprocessing/RenderPass.js'
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { generateFaceTexture, preloadFaceTextures } from './TextureGenerator.js'
 import { settings } from '@/settings/store.js'
 
@@ -23,25 +20,8 @@ const COL_Z_CENTER = (slotZ(0) + slotZ(2)) / 2
 const COL_DEPTH    = slotZ(2) - slotZ(0) + DICE_SIZE + 0.5
 const COL_WIDTH    = COL_SPACING - 0.06
 
-// ── Quality presets ───────────────────────────────────────────────────────────
-function pixelRatioFor(quality) {
-  if (quality === 'low')    return 1
-  if (quality === 'medium') return Math.min(window.devicePixelRatio, 1.5)
-  return window.devicePixelRatio          // high — full HiDPI
-}
-
-function bloomStrFor(quality) {
-  if (quality === 'low')    return 0
-  if (quality === 'medium') return 0.3
-  return 0.5                              // high
-}
-
-function bloomRadFor(quality) {
-  return quality === 'high' ? 0.4 : 0.3
-}
-
 // ── Multiplier colours ────────────────────────────────────────────────────────
-const COLOR_NORMAL = new THREE.Color(0xf5e6c8)   // lighter ivory
+const COLOR_NORMAL = new THREE.Color(0xf5e6c8)
 const COLOR_GOLD   = new THREE.Color(0xe8b840)
 const COLOR_BLUE   = new THREE.Color(0x6699ff)
 
@@ -59,7 +39,7 @@ function randomRestRotation() {
   }
 }
 
-// ── Dice materials — roughness 0.4, metalness 0.15 for better light response ─
+// ── Dice materials ────────────────────────────────────────────────────────────
 function makeSideMat(color = COLOR_NORMAL) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.15 })
 }
@@ -116,7 +96,7 @@ export class SceneManager {
     this._rafId      = null
     this._ready      = false
     this._fastAnimations = false
-    this._particleCount  = 10    // full count; halved for medium quality
+    this._particleCount  = 10
 
     this._raycaster  = new THREE.Raycaster()
     this._hitAreas   = []
@@ -126,17 +106,13 @@ export class SceneManager {
     this._iBoards    = null
     this._onPlace    = null
 
-    this._camBasePos = new THREE.Vector3(0, 11, 4)
+    // Camera at Y=14, Z=6 to see both boards fully
+    this._camBasePos = new THREE.Vector3(0, 14, 6)
 
     // Shake state
     this._shakeActive    = false
     this._shakeIntensity = 0
     this._shakeEndTime   = 0
-
-    // Bloom tween
-    this._bloomBaseStr  = 0
-    this._bloomCurrent  = 0
-    this._bloomTweenEnd = 0
 
     this._handleMove  = this._onPointerMove.bind(this)
     this._handleDown  = this._onPointerDown.bind(this)
@@ -149,34 +125,28 @@ export class SceneManager {
     const w      = rect.width  || 800
     const h      = rect.height || 600
 
-    const quality = settings.quality  // loaded from localStorage
-
-    // ── Renderer (antialias always false per spec — use FXAA if needed) ────────
+    // ── Renderer — pixelRatio fixed at 1 for stable 60 FPS ───────────────────
     this._renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false })
-    this._renderer.setPixelRatio(pixelRatioFor(quality))
+    this._renderer.setPixelRatio(1)
     this._renderer.setSize(w, h, false)
     this._renderer.setClearColor(0x05020d, 1)
-    this._renderer.shadowMap.enabled = quality !== 'low'
-    this._renderer.shadowMap.type    = quality === 'high'
-      ? THREE.PCFSoftShadowMap
-      : THREE.BasicShadowMap
+    this._renderer.shadowMap.enabled = settings.quality !== 'low'
+    this._renderer.shadowMap.type    = THREE.PCFSoftShadowMap
 
     this._scene = new THREE.Scene()
     this._scene.background = new THREE.Color(0x05020d)
 
-    // ── Camera ────────────────────────────────────────────────────────────────
-    this._camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100)
+    // ── Camera — high enough to see both boards ───────────────────────────────
+    this._camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 100)
     this._camera.position.copy(this._camBasePos)
     this._camera.lookAt(0, 0, 0)
 
     // ── Lighting ──────────────────────────────────────────────────────────────
-    // Bright warm ambient — ensures dice are visible even without direct light
     this._scene.add(new THREE.AmbientLight(0xffe8d0, 1.2))
 
-    // Main red key light
     const keyLight = new THREE.PointLight(0xff4444, 3.0, 28)
     keyLight.position.set(0, 6, 4)
-    keyLight.castShadow = quality !== 'low'
+    keyLight.castShadow = settings.quality !== 'low'
     if (keyLight.castShadow) {
       keyLight.shadow.mapSize.width  = 1024
       keyLight.shadow.mapSize.height = 1024
@@ -184,30 +154,17 @@ export class SceneManager {
     this._scene.add(keyLight)
     this._keyLight = keyLight
 
-    // Gold fill — warm secondary light
     const fillLight = new THREE.PointLight(0xffaa22, 1.5, 22)
     fillLight.position.set(-4, 5, 2)
     this._scene.add(fillLight)
 
-    // Directional light — spreads across the whole board without falloff
     const dirLight = new THREE.DirectionalLight(0xfff0e0, 1.8)
     dirLight.position.set(2, 8, 5)
-    dirLight.castShadow = false   // no cost
+    dirLight.castShadow = false
     this._scene.add(dirLight)
 
-    // ── Post-processing ───────────────────────────────────────────────────────
-    this._composer = new EffectComposer(this._renderer)
-    this._composer.addPass(new RenderPass(this._scene, this._camera))
-
-    const bStr = settings.bloomEnabled ? bloomStrFor(quality) : 0
-    this._bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), bStr, bloomRadFor(quality), 0.85)
-    this._bloomPass.enabled = settings.bloomEnabled && quality !== 'low'
-    this._bloomBaseStr  = bStr
-    this._bloomCurrent  = bStr
-    this._composer.addPass(this._bloomPass)
-
     // Particle count depends on quality
-    this._particleCount = quality === 'high' ? 10 : quality === 'medium' ? 5 : 0
+    this._particleCount = settings.quality === 'high' ? 10 : settings.quality === 'medium' ? 5 : 0
 
     // ── Scene geometry ────────────────────────────────────────────────────────
     this._buildFloor()
@@ -270,13 +227,13 @@ export class SceneManager {
       const depth = Math.abs(zFar - zNear)
 
       // Board base
-      this._scene.add(Object.assign(
-        new THREE.Mesh(
-          new THREE.BoxGeometry(BOARD_W, 0.12, depth),
-          new THREE.MeshStandardMaterial({ color: player === 0 ? 0x060d1f : 0x1f0606, roughness: 0.85 }),
-        ),
-        { position: new THREE.Vector3(0, -0.06, zCtr), receiveShadow: true },
-      ))
+      const boardBase = new THREE.Mesh(
+        new THREE.BoxGeometry(BOARD_W, 0.12, depth),
+        new THREE.MeshStandardMaterial({ color: player === 0 ? 0x060d1f : 0x1f0606, roughness: 0.85 }),
+      )
+      boardBase.position.set(0, -0.06, zCtr)
+      boardBase.receiveShadow = true
+      this._scene.add(boardBase)
 
       const slotBase   = player === 0 ? 0x0a1535 : 0x350a0a
       const slotBorder = player === 0 ? 0x1a3a6a : 0x6a1a1a
@@ -286,7 +243,6 @@ export class SceneManager {
         for (let s = 0; s < 3; s++) {
           const pos = slotPosition(player, c, s)
 
-          // Slot base — with emissive so it glows faintly
           const marker = new THREE.Mesh(
             new THREE.BoxGeometry(DICE_SIZE + 0.1, 0.04, DICE_SIZE + 0.1),
             new THREE.MeshStandardMaterial({
@@ -298,7 +254,6 @@ export class SceneManager {
           marker.receiveShadow = true
           this._scene.add(marker)
 
-          // Border ring
           const ring = new THREE.Mesh(
             new THREE.BoxGeometry(DICE_SIZE + 0.18, 0.03, DICE_SIZE + 0.18),
             new THREE.MeshStandardMaterial({
@@ -424,14 +379,8 @@ export class SceneManager {
 
   _onPointerLeave() { this._clearHighlights(); this._canvas.style.cursor = '' }
 
-  // ── Bloom / shake API ─────────────────────────────────────────────────────
-  triggerBloomPulse(strength = 1.2, holdMs = 300, returnTo = null) {
-    if (!this._bloomPass?.enabled) return
-    this._bloomPass.strength = strength
-    this._bloomCurrent = strength
-    this._bloomTweenEnd = performance.now() + holdMs
-    if (returnTo !== null) this._bloomBaseStr = returnTo
-  }
+  // ── Shake API (bloom stubs kept so callers don't break) ───────────────────
+  triggerBloomPulse(_strength, _holdMs, _returnTo) { /* no-op: postprocessing removed */ }
 
   triggerShake(intensity = 0.08, duration = 200) {
     if (!settings.shakeEnabled) return
@@ -440,50 +389,12 @@ export class SceneManager {
     this._shakeActive    = true
   }
 
-  setBloomEnabled(enabled) {
-    if (!this._bloomPass) return
-    this._bloomPass.enabled = enabled && settings.quality !== 'low'
-    if (enabled) {
-      const bStr = bloomStrFor(settings.quality)
-      this._bloomPass.strength = bStr
-      this._bloomBaseStr = bStr
-      this._bloomCurrent = bStr
-    }
-  }
+  setBloomEnabled(_enabled) { /* no-op: postprocessing removed */ }
 
-  /**
-   * Apply a quality preset. Updates pixel ratio, shadows, bloom, particles.
-   * Must be called from the SettingsPanel after updateSetting('quality', q).
-   */
   setQuality(quality) {
-    // Pixel ratio — must resize afterwards to take effect
-    this._renderer.setPixelRatio(pixelRatioFor(quality))
-    const rect = this._canvas.getBoundingClientRect()
-    if (rect.width > 0 && rect.height > 0) {
-      this._renderer.setSize(rect.width, rect.height, false)
-      this._composer.setSize(rect.width, rect.height)
-      if (this._bloomPass) this._bloomPass.resolution.set(rect.width, rect.height)
-    }
-
-    // Shadows
     this._renderer.shadowMap.enabled = quality !== 'low'
-    this._renderer.shadowMap.type    = quality === 'high'
-      ? THREE.PCFSoftShadowMap
-      : THREE.BasicShadowMap
     this._renderer.shadowMap.needsUpdate = true
     if (this._keyLight) this._keyLight.castShadow = quality !== 'low'
-
-    // Bloom
-    const bStr = settings.bloomEnabled ? bloomStrFor(quality) : 0
-    if (this._bloomPass) {
-      this._bloomPass.strength  = bStr
-      this._bloomPass.radius    = bloomRadFor(quality)
-      this._bloomPass.enabled   = settings.bloomEnabled && quality !== 'low'
-    }
-    this._bloomBaseStr = bStr
-    this._bloomCurrent = bStr
-
-    // Particles
     this._particleCount = quality === 'high' ? 10 : quality === 'medium' ? 5 : 0
   }
 
@@ -566,18 +477,17 @@ export class SceneManager {
     }
   }
 
-  // ── Render loop ───────────────────────────────────────────────────────────
+  // ── Render loop — direct render, no postprocessing ────────────────────────
   _startLoop() {
     let prev = performance.now()
     const loop = (now) => {
-      // ↑ RAF ID stored BEFORE render so dispose() can always cancel it
       this._rafId = requestAnimationFrame(loop)
       this._stats?.begin()
 
       const dt = Math.min((now - prev) / 1000, 0.05)
       prev = now
       this._tick(dt, now)
-      this._composer.render()
+      this._renderer.render(this._scene, this._camera)
 
       this._stats?.end()
     }
@@ -606,15 +516,6 @@ export class SceneManager {
     }
     if (dead.length) this._particles = this._particles.filter(p => !dead.includes(p))
 
-    // Bloom tween — fade back to base strength after pulse hold period
-    if (this._bloomPass?.enabled && now >= this._bloomTweenEnd) {
-      const diff = this._bloomBaseStr - this._bloomCurrent
-      if (Math.abs(diff) > 0.001) {
-        this._bloomCurrent += diff * (1 - Math.exp(-4 * dt))
-        this._bloomPass.strength = this._bloomCurrent
-      }
-    }
-
     // Camera shake
     if (this._shakeActive) {
       if (now < this._shakeEndTime) {
@@ -634,18 +535,13 @@ export class SceneManager {
   // ── Resize ────────────────────────────────────────────────────────────────
   resize(w, h) {
     if (!this._ready || w < 1 || h < 1) return
-    // setSize uses whatever pixelRatio was last set via setPixelRatio — no need to re-set it
     this._renderer.setSize(w, h, false)
-    this._composer.setSize(w, h)
-    if (this._bloomPass) this._bloomPass.resolution.set(w, h)
     this._camera.aspect = w / h
     this._camera.updateProjectionMatrix()
   }
 
   // ── Dispose ───────────────────────────────────────────────────────────────
   dispose() {
-    // Cancel the loop FIRST — the ID is always current because we store it
-    // at the top of the loop (before render), so cancelAnimationFrame is safe
     if (this._rafId) cancelAnimationFrame(this._rafId)
     if (this._renderer) this._renderer.dispose()
     if (this._stats?.dom?.parentNode) this._stats.dom.parentNode.removeChild(this._stats.dom)

@@ -3,87 +3,14 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(ellipse at 50% 100%, #1a0a2e 0%, #0d0118 70%);
+  background: #000000;
   overflow: hidden;
 }
 
-/* Turn strip */
-.turnStrip {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 14px;
-  background: rgba(0,0,0,0.35);
-  border-bottom: 1px solid var(--border-color);
-  font-family: var(--font-heading);
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  gap: 8px;
-}
-
-.stripRight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.spaceHint {
-  font-size: 0.62rem;
-  color: var(--text-dim);
-  font-style: italic;
-  letter-spacing: 0.03em;
-}
-
-.botThinking {
-  font-style: italic;
-  color: var(--p2-color);
-  opacity: 0.8;
-  font-size: 0.9em;
-}
-
-.turnStrip strong {
-  color: var(--tc, var(--accent-gold));
-}
-
-.settingsBtn {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  color: var(--text-dim);
-  font-size: 0.85rem;
-  padding: 3px 8px;
-  cursor: pointer;
-  line-height: 1;
-  transition: color 0.15s, border-color 0.15s;
-}
-.settingsBtn:hover { color: var(--accent-gold); border-color: var(--accent-gold); }
-
-.menuBtn {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  color: var(--text-dim);
-  font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.menuBtn:hover {
-  color: var(--text-secondary);
-  border-color: var(--text-secondary);
-}
-
-/* Main row: panel | canvas | panel */
+/* Main row: panel | canvas | panel — no padding, no gap */
 .main {
   flex: 1;
   display: flex;
-  gap: 10px;
-  padding: 10px;
   overflow: hidden;
   min-height: 0;
 }
@@ -92,9 +19,7 @@
 .canvasWrap {
   flex: 1;
   position: relative;
-  border-radius: 6px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
 }
 
 .canvas {
@@ -105,18 +30,87 @@
   display: block;
 }
 
+/* Turn indicator — floats over the canvas, centred at top */
+.turnOverlay {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 4px 18px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: #e8d5b0;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.turnOverlay strong {
+  color: var(--tc, #c9a84c);
+}
+
+.botThinking {
+  font-style: italic;
+  color: var(--p2-color);
+  opacity: 0.85;
+  font-size: 0.9em;
+}
+
+.spaceHint {
+  font-size: 10px;
+  color: #5a4a3a;
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
+/* Top-right controls inside the canvas wrap */
+.controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+}
+
+.settingsBtn {
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  color: #5a4a3a;
+  font-size: 0.85rem;
+  padding: 3px 8px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s, border-color 0.15s;
+}
+.settingsBtn:hover { color: #c9a84c; border-color: #c9a84c; }
+
+.menuBtn {
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  color: #5a4a3a;
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.menuBtn:hover { color: #e8d5b0; border-color: #e8d5b0; }
+
 /* ── Mobile (portrait) ─────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .main {
-    flex-direction: column;
-    gap: 6px;
-    padding: 6px;
-  }
-
-  /* Canvas goes first, panels stack below */
-  .canvasWrap {
-    order: -1;
-    flex: 1;
-    min-height: 0;
-  }
+  .main { flex-direction: column; }
+  .canvasWrap { flex: 1; min-height: 0; order: -1; }
 }

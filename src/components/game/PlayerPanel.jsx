@@ -4,7 +4,6 @@ import { isColumnFull } from '@/game/constants.js'
 import { t } from '@/i18n/index.js'
 import styles from './PlayerPanel.module.css'
 
-/** Animates a number from its previous value to `target` over `duration` ms */
 function useCountUp(target, duration = 600) {
   const [display, setDisplay] = useState(target)
   const prevRef = useRef(target)
@@ -20,7 +19,7 @@ function useCountUp(target, duration = 600) {
     const animate = (now) => {
       const elapsed = now - startTime
       const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3) // easeOutCubic
+      const eased = 1 - Math.pow(1 - progress, 3)
       setDisplay(Math.round(prev + diff * eased))
       if (progress < 1) requestAnimationFrame(animate)
     }
@@ -28,6 +27,16 @@ function useCountUp(target, duration = 600) {
   }, [target, duration])
 
   return display
+}
+
+function Ornament() {
+  return (
+    <svg width="120" height="20" aria-hidden="true" className={styles.ornament}>
+      <line x1="0" y1="10" x2="45" y2="10" stroke="#3a3a3a" strokeWidth="1"/>
+      <circle cx="60" cy="10" r="4" fill="none" stroke="#8B0000" strokeWidth="1"/>
+      <line x1="75" y1="10" x2="120" y2="10" stroke="#3a3a3a" strokeWidth="1"/>
+    </svg>
+  )
 }
 
 export function PlayerPanel({
@@ -45,36 +54,35 @@ export function PlayerPanel({
 }) {
   const canRoll  = isMyTurn && phase === 'rolling' && !isBot
   const canPlace = isMyTurn && phase === 'placing' && !isBot
-  const color    = playerIndex === 0 ? 'var(--p1-color)' : 'var(--p2-color)'
   const scoreDisplay = useCountUp(totalScore)
+  const initial  = (playerName || '?')[0].toUpperCase()
+  const scoreColor = playerIndex === 0 ? '#c8860a' : '#c41e3a'
 
   return (
     <aside
-      className={`${styles.panel} ${isMyTurn ? styles.active : styles.inactive}`}
-      style={{ '--pc': color }}
+      className={`${styles.panel} ${isMyTurn ? styles.active : styles.inactive} ${playerIndex === 1 ? styles.right : ''}`}
       aria-label={`Panel de ${playerName}`}
     >
-      {/* Player header */}
+      {/* Avatar + name */}
       <div className={styles.header}>
-        <span className={styles.dot} />
+        <div className={styles.avatar} style={{ borderColor: isMyTurn ? scoreColor : '#3a3a3a' }}>
+          <span className={styles.avatarInitial}>{initial}</span>
+        </div>
+        <Ornament />
         <span className={`${styles.name} ${isMyTurn ? styles.nameActive : ''}`}>
-          {isMyTurn && <span className={styles.flame} aria-hidden="true">🔥</span>}
           {playerName}
         </span>
       </div>
 
       {/* Score */}
-      <div className={styles.scoreRow}>
-        <span className={styles.scoreLabel}>{t('game.score')}</span>
-        <span
-          className={styles.scoreValue}
-          style={{ color: playerIndex === 0 ? '#c8860a' : '#c41e3a' }}
-        >
+      <div className={styles.scoreBlock}>
+        <span className={styles.scoreValue} style={{ color: scoreColor }}>
           {scoreDisplay}
         </span>
+        <span className={styles.scoreLabel}>{t('game.score')}</span>
       </div>
 
-      {/* Column scores */}
+      {/* Column scores pills */}
       <div className={styles.colScores}>
         {columnScores.map((s, i) => (
           <div key={i} className={styles.colBadge}>
@@ -84,12 +92,12 @@ export function PlayerPanel({
         ))}
       </div>
 
-      <div className={styles.divider} />
+      <Ornament />
 
       {/* Die box */}
       <div className={styles.dieBox}>
         {currentRoll !== null && isMyTurn ? (
-          <DiceDisplay value={currentRoll} size={60} />
+          <DiceDisplay value={currentRoll} size={64} />
         ) : (
           <div className={styles.diePlaceholder}>
             <span>?</span>
@@ -112,7 +120,7 @@ export function PlayerPanel({
         </button>
       )}
 
-      {/* Column select buttons */}
+      {/* Column buttons */}
       <div className={styles.colBtns} style={isBot ? { visibility: 'hidden' } : undefined}>
         {board.map((col, ci) => {
           const full    = isColumnFull(col)
@@ -131,6 +139,10 @@ export function PlayerPanel({
           )
         })}
       </div>
+
+      <div className={styles.spacer} />
+
+      <p className={styles.disclaimer}>Fan project · © Massive Monster</p>
     </aside>
   )
 }

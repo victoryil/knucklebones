@@ -38,13 +38,12 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu, pl
     return () => window.removeEventListener('keydown', onKey)
   }, [phase, currentPlayer, mode, isMyTurn, onRoll])
 
-  // Destruction: sound + bloom pulse + shake
+  // Destruction: sound + shake
   const prevDestroyedRef = useRef([])
   useEffect(() => {
     if (lastDestroyed.length > 0 && lastDestroyed !== prevDestroyedRef.current) {
       audioEngine.playDestroy()
       audioEngine.onDiceDestroyed()
-      sceneRef.current?.triggerBloomPulse(1.2, 300, 0.4)
       sceneRef.current?.triggerShake(0.05, 200)
     }
     prevDestroyedRef.current = lastDestroyed
@@ -72,7 +71,6 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu, pl
   const prevBoardsRef = useRef(boards)
   useEffect(() => {
     if (prevBoardsRef.current !== boards) {
-      // Detect newly created combos (count ≥ 2 in any column)
       for (let p = 0; p < 2; p++) {
         for (let c = 0; c < 3; c++) {
           const col    = boards[p][c]
@@ -84,14 +82,13 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu, pl
           for (const [val, cnt] of Object.entries(counts)) {
             if (cnt >= 2 && (prevCounts[val] ?? 0) < cnt) {
               audioEngine.onComboCreated(cnt)
-              if (cnt >= 2) sceneRef.current?.triggerBloomPulse(cnt === 3 ? 0.9 : 0.65, cnt === 3 ? 500 : 300, 0.4)
             }
           }
         }
       }
       prevBoardsRef.current = boards
     }
-  }, [boards, sceneRef])
+  }, [boards])
 
   // Animation advance
   useEffect(() => {
@@ -107,31 +104,8 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu, pl
 
   return (
     <div className={styles.screen}>
-      {/* Turn strip */}
-      <div
-        className={styles.turnStrip}
-        style={{ '--tc': currentPlayer === 0 ? p0Color : p1Color }}
-      >
-        <span>
-          {t('game.turn_of')} <strong>{playerNames[currentPlayer]}</strong>
-          {isBotTurn && <em className={styles.botThinking}> — {t('game.bot_thinking')}</em>}
-        </span>
-        <div className={styles.stripRight}>
-          {!isBotTurn && phase === PHASES.ROLLING && isMyTurn && (
-            <span className={styles.spaceHint}>{t('game.space_hint')}</span>
-          )}
-          <InfoButton onClick={() => setShowInfo(true)} />
-          <button
-            className={styles.settingsBtn}
-            onClick={() => setShowSettings(s => !s)}
-            aria-label="Settings"
-          >⚙</button>
-          <button className={styles.menuBtn} onClick={onMenu}>Menú</button>
-        </div>
-      </div>
-
-      {/* Main layout */}
       <div className={styles.main}>
+        {/* Left panel — player 0 */}
         <PlayerPanel
           playerIndex={0}
           playerName={playerNames[0]}
@@ -145,10 +119,35 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu, pl
           onPlace={guardedOnPlace}
         />
 
+        {/* Canvas — turn overlay floats above it */}
         <div className={styles.canvasWrap}>
           <canvas ref={canvasRef} className={styles.canvas} />
+
+          <div
+            className={styles.turnOverlay}
+            style={{ '--tc': currentPlayer === 0 ? p0Color : p1Color }}
+          >
+            <span>
+              {t('game.turn_of')} <strong>{playerNames[currentPlayer]}</strong>
+              {isBotTurn && <em className={styles.botThinking}> — {t('game.bot_thinking')}</em>}
+            </span>
+            {!isBotTurn && phase === PHASES.ROLLING && isMyTurn && (
+              <span className={styles.spaceHint}>{t('game.space_hint')}</span>
+            )}
+          </div>
+
+          <div className={styles.controls}>
+            <InfoButton onClick={() => setShowInfo(true)} />
+            <button
+              className={styles.settingsBtn}
+              onClick={() => setShowSettings(s => !s)}
+              aria-label="Settings"
+            >⚙</button>
+            <button className={styles.menuBtn} onClick={onMenu}>Menú</button>
+          </div>
         </div>
 
+        {/* Right panel — player 1 */}
         <PlayerPanel
           playerIndex={1}
           playerName={playerNames[1]}
