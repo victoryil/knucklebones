@@ -1,3 +1,5 @@
 name = "knucklebones"
 compatibility_date = "2024-11-01"
-# No se requiere [assets] para despliegue de Cloudflare Pages pura
+
+[assets]
+directory = "./dist"
