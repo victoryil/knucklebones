@@ -11,10 +11,10 @@ const DEFAULTS = {
   sfxVolume: 1.0,
   musicEnabled: true,
   sfxEnabled: true,
-  bloomEnabled: true,
+  bloomEnabled: false,   // off by default — user enables in settings
   shakeEnabled: true,
   particlesEnabled: true,
-  quality: 'high',      // 'high' | 'medium' | 'low'
+  quality: 'medium',    // 'high' | 'medium' | 'low'
   fastAnimations: false,
   botDifficulty: 'normal', // 'easy' | 'normal' | 'hard'
 }
