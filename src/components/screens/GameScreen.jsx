@@ -12,7 +12,7 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
   const canvasRef    = useRef(null)
   const [showInfo, setShowInfo] = useState(false)
 
-  useThreeScene(canvasRef, boards, { phase, currentPlayer, onPlace })
+  useThreeScene(canvasRef, boards, { phase, currentPlayer, onPlace }, lastDestroyed)
 
   // Play destruction sound whenever lastDestroyed has entries
   const prevDestroyedRef = useRef([])

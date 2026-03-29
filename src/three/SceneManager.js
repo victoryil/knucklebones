@@ -339,40 +339,85 @@ export class SceneManager {
   }
 
   // ── Board sync ────────────────────────────────────────────────────────────
-  syncBoards(boards) {
+  /**
+   * Synchronise the 3D scene with the new board state.
+   *
+   * Three-step process to handle destruction + compaction correctly:
+   *   1. Remove explicitly destroyed dice (with particles). Their positions are
+   *      the PRE-COMPACT indices stored in lastDestroyed.
+   *   2. Slide surviving dice in affected columns to their compacted positions
+   *      by updating their target (the lerp animation takes care of movement).
+   *   3. Spawn new dice that don't yet have a mesh.
+   *
+   * @param {Array}  boards        new board state (already compacted in reducer)
+   * @param {Array}  lastDestroyed [{player, col, positions}] — original slot indices
+   */
+  syncBoards(boards, lastDestroyed = []) {
     if (!this._ready) return
 
-    const present = new Set()
+    // ── Step 1: explicitly destroy flagged dice ──────────────────────────────
+    const compactCols = new Set()   // "p-c" pairs that need compaction
+    for (const { player: p, col: c, positions } of lastDestroyed) {
+      compactCols.add(`${p}-${c}`)
+      for (const s of positions) {
+        const key   = `${p}-${c}-${s}`
+        const entry = this._diceMap.get(key)
+        if (!entry) continue
+        spawnParticles(this._scene, entry.mesh.position.clone(), this._particles)
+        this._scene.remove(entry.mesh)
+        this._diceMap.delete(key)
+      }
+    }
 
+    // ── Step 2: compact surviving dice towards slot 0 in affected columns ────
+    for (const colKey of compactCols) {
+      const [p, c] = colKey.split('-').map(Number)
+
+      // Gather surviving meshes in slot order
+      const survivors = []
+      for (let s = 0; s < 3; s++) {
+        const key   = `${p}-${c}-${s}`
+        const entry = this._diceMap.get(key)
+        if (entry) { survivors.push(entry); this._diceMap.delete(key) }
+      }
+      // Re-assign to compacted positions — animate via target lerp
+      survivors.forEach((entry, newSlot) => {
+        entry.target.copy(slotPosition(p, c, newSlot))
+        this._diceMap.set(`${p}-${c}-${newSlot}`, entry)
+      })
+    }
+
+    // ── Step 3: spawn newly placed dice ──────────────────────────────────────
     for (let p = 0; p < 2; p++) {
       for (let c = 0; c < 3; c++) {
         for (let s = 0; s < 3; s++) {
           const val = boards[p][c][s]
           const key = `${p}-${c}-${s}`
-
-          if (val !== null) {
-            present.add(key)
-            if (!this._diceMap.has(key)) {
-              const mesh   = createDiceMesh(val)
-              const target = slotPosition(p, c, s)
-              const rest   = randomRestRotation()
-              mesh.position.copy(target).setY(target.y + 5)
-              mesh.rotation.set(
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2,
-              )
-              this._scene.add(mesh)
-              this._diceMap.set(key, { mesh, target: target.clone(), rest })
-            }
+          if (val !== null && !this._diceMap.has(key)) {
+            const mesh   = createDiceMesh(val)
+            const target = slotPosition(p, c, s)
+            mesh.position.copy(target).setY(target.y + 5)
+            mesh.rotation.set(
+              Math.random() * Math.PI * 2,
+              Math.random() * Math.PI * 2,
+              Math.random() * Math.PI * 2,
+            )
+            this._scene.add(mesh)
+            this._diceMap.set(key, { mesh, target: target.clone(), rest: randomRestRotation() })
           }
         }
       }
     }
 
+    // ── Safety net: remove any stale meshes not represented in the board ─────
+    const present = new Set()
+    for (let p = 0; p < 2; p++)
+      for (let c = 0; c < 3; c++)
+        for (let s = 0; s < 3; s++)
+          if (boards[p][c][s] !== null) present.add(`${p}-${c}-${s}`)
+
     for (const [key, entry] of this._diceMap) {
       if (!present.has(key)) {
-        spawnParticles(this._scene, entry.mesh.position.clone(), this._particles)
         this._scene.remove(entry.mesh)
         this._diceMap.delete(key)
       }

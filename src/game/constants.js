@@ -69,6 +69,7 @@ export function placeInColumn(column, value) {
 /**
  * Remove all dice of a given value from a column.
  * Returns { newColumn, destroyedPositions }.
+ * NOTE: newColumn may contain null gaps — call compactColumn afterwards.
  */
 export function destroyFromColumn(column, value) {
   const destroyedPositions = []
@@ -80,4 +81,15 @@ export function destroyFromColumn(column, value) {
     return slot
   })
   return { newColumn, destroyedPositions }
+}
+
+/**
+ * Compact a column so all non-null values are at the lowest indices
+ * (closest to the centre dividing line), preserving their order.
+ * [3, null, 5] → [3, 5, null]
+ */
+export function compactColumn(column) {
+  const filled = column.filter(v => v !== null)
+  while (filled.length < SLOTS) filled.push(null)
+  return filled
 }

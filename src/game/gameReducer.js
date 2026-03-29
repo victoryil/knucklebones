@@ -3,11 +3,11 @@ import {
   COLS,
   SLOTS,
   calcAllColumnScores,
-  calcTotalScore,
   isBoardFull,
   isColumnFull,
   placeInColumn,
   destroyFromColumn,
+  compactColumn,
 } from './constants.js'
 
 /** Deep-clone the boards array */
@@ -60,12 +60,14 @@ export function gameReducer(state, action) {
       // Place die on current player's board
       newBoards[player][col] = placeInColumn(newBoards[player][col], state.currentRoll)
 
-      // Destroy matching dice on opponent's board
-      const { newColumn: opponentCol, destroyedPositions } = destroyFromColumn(
+      // Destroy matching dice on opponent's board, then compact surviving dice
+      // towards slot 0 (closest to the centre dividing line).
+      // destroyedPositions uses the PRE-COMPACT indices so the scene can find the meshes.
+      const { newColumn: destroyed, destroyedPositions } = destroyFromColumn(
         newBoards[opponent][col],
         state.currentRoll,
       )
-      newBoards[opponent][col] = opponentCol
+      newBoards[opponent][col] = compactColumn(destroyed)
 
       const lastDestroyed = destroyedPositions.length > 0
         ? [{ player: opponent, col, positions: destroyedPositions }]
