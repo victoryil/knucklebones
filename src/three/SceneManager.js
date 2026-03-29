@@ -146,8 +146,6 @@ export class SceneManager {
     this._renderer.setClearColor(0x05020d, 1)
     this._renderer.shadowMap.enabled = settings.quality !== 'low'
     this._renderer.shadowMap.type    = THREE.PCFSoftShadowMap
-    this._renderer.toneMapping       = THREE.ACESFilmicToneMapping
-    this._renderer.toneMappingExposure = 1.1
 
     this._scene = new THREE.Scene()
     this._scene.background = new THREE.Color(0x05020d)
@@ -158,9 +156,11 @@ export class SceneManager {
     this._camera.lookAt(0, 0, 0)
 
     // ── Lighting ──────────────────────────────────────────────────────────────
-    this._scene.add(new THREE.AmbientLight(0x1a0808, 0.3))
+    // Warm dark-red ambient — enough to see geometry without washing out colour
+    this._scene.add(new THREE.AmbientLight(0x3a1818, 1.2))
 
-    const redLight = new THREE.PointLight(0x8b0000, 1.5, 20)
+    // Main red key light — bright enough to illuminate dice and boards
+    const redLight = new THREE.PointLight(0xff3311, 2.0, 24)
     redLight.position.set(0, 8, 2)
     redLight.castShadow = settings.quality !== 'low'
     if (redLight.castShadow) {
@@ -169,11 +169,13 @@ export class SceneManager {
     }
     this._scene.add(redLight)
 
-    const goldLight = new THREE.PointLight(0xc8860a, 0.4, 15)
+    // Gold fill — warms the near side of the board
+    const goldLight = new THREE.PointLight(0xd4a040, 0.8, 18)
     goldLight.position.set(-3, 4, -1)
     this._scene.add(goldLight)
 
-    const blueLight = new THREE.PointLight(0x080820, 0.6, 18)
+    // Blue rim — subtle cool highlight from the far corner
+    const blueLight = new THREE.PointLight(0x3344aa, 0.5, 20)
     blueLight.position.set(3, 3, 3)
     this._scene.add(blueLight)
 
