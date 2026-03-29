@@ -273,6 +273,86 @@
   opacity: 1;
 }
 
+/* Online host/join panel */
+.onlinePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.onlineSubRow {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.onlineSubRow > button {
+  flex: 1;
+}
+
+.onlineCodeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px;
+  background: rgba(201, 168, 76, 0.07);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 6px;
+}
+
+.onlineCodeLabel {
+  font-size: 0.7rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.onlineCode {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  letter-spacing: 0.15em;
+  color: var(--accent-gold-bright);
+  word-break: break-all;
+  text-align: center;
+}
+
+.onlineStatus {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+  font-style: italic;
+}
+
+.onlineJoinRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.onlineJoinRow input {
+  flex: 1;
+}
+
+.onlineBack {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 2px 0;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.onlineBack:hover {
+  color: var(--text-secondary);
+}
+
 /* Footer */
 .footer {
   position: relative;

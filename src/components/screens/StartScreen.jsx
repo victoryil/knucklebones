@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button.jsx'
+import { host, join } from '@/network/networkInterface.js'
 import { t } from '@/i18n/index.js'
 import styles from './StartScreen.module.css'
 
 export function StartScreen({ onStart, locale, onToggleLocale }) {
   const [p1, setP1]   = useState('')
-  const [mode, setMode] = useState('local')   // 'local' | 'bot'
+  const [mode, setMode] = useState('local')   // 'local' | 'bot' | 'online'
 
   const handleStart = () => {
     onStart({
@@ -55,15 +56,15 @@ export function StartScreen({ onStart, locale, onToggleLocale }) {
           >
             {t('start.play_bot')}
           </button>
-          <div className={styles.tooltipWrap}>
-            <button className={`${styles.modeBtn} ${styles.modeBtnDisabled}`} disabled>
-              {t('start.play_online')}
-            </button>
-            <span className={styles.tooltip}>{t('start.coming_soon')}</span>
-          </div>
+          <button
+            className={`${styles.modeBtn} ${mode === 'online' ? styles.modeBtnActive : ''}`}
+            onClick={() => setMode('online')}
+          >
+            {t('start.play_online')}
+          </button>
         </div>
 
-        {/* Player name inputs */}
+        {/* Player name + second player area */}
         <div className={styles.namesArea}>
           <div className={styles.nameField}>
             <label className={styles.nameLabel} htmlFor="p1name">
@@ -81,21 +82,121 @@ export function StartScreen({ onStart, locale, onToggleLocale }) {
             />
           </div>
 
-          {mode === 'local' ? (
-            <LocalP2Field locale={locale} />
-          ) : (
-            <BotLabel />
+          {mode === 'local' && <LocalP2Field locale={locale} />}
+          {mode === 'bot'   && <BotLabel />}
+          {mode === 'online' && (
+            <OnlinePanel
+              p1Name={p1.trim() || t('start.player1_placeholder')}
+              onStart={onStart}
+            />
           )}
         </div>
 
-        <Button onClick={handleStart} className={styles.mainBtn}>
-          {mode === 'bot' ? `▶ ${t('start.play_bot')}` : `▶ ${t('start.play_local')}`}
-        </Button>
+        {mode !== 'online' && (
+          <Button onClick={handleStart} className={styles.mainBtn}>
+            {mode === 'bot' ? `▶ ${t('start.play_bot')}` : `▶ ${t('start.play_local')}`}
+          </Button>
+        )}
       </main>
 
       <footer className={styles.footer}>
         <p>{t('disclaimer.text')}</p>
       </footer>
+    </div>
+  )
+}
+
+/** Host / Join flow for online mode */
+function OnlinePanel({ p1Name, onStart }) {
+  const [subMode, setSubMode] = useState(null)    // null | 'host' | 'join'
+  const [roomCode, setRoomCode] = useState('')     // generated code (host) or typed code (join)
+  const [status, setStatus] = useState('idle')    // 'idle' | 'pending' | 'waiting' | 'connecting'
+
+  const handleHost = async () => {
+    setSubMode('host')
+    setStatus('pending')
+    const code = await host(() => {
+      // opponent connected → start game as player 0
+      onStart({ playerNames: [p1Name, t('start.online_opponent')], mode: 'online', playerIndex: 0 })
+    })
+    setRoomCode(code)
+    setStatus('waiting')
+  }
+
+  const handleJoin = () => {
+    setSubMode('join')
+    setStatus('idle')
+    setRoomCode('')
+  }
+
+  const handleConnect = async () => {
+    if (!roomCode.trim()) return
+    setStatus('connecting')
+    await join(roomCode.trim(), () => {
+      // connected → start game as player 1
+      onStart({ playerNames: [p1Name, t('start.online_opponent')], mode: 'online', playerIndex: 1 })
+    })
+  }
+
+  return (
+    <div className={styles.onlinePanel}>
+      {/* Host / Join sub-buttons */}
+      {status === 'idle' && subMode === null && (
+        <div className={styles.onlineSubRow}>
+          <button className={styles.modeBtn} onClick={handleHost}>
+            {t('start.host_game')}
+          </button>
+          <button className={styles.modeBtn} onClick={handleJoin}>
+            {t('start.join_game')}
+          </button>
+        </div>
+      )}
+
+      {/* Host: pending (generating code) */}
+      {subMode === 'host' && status === 'pending' && (
+        <p className={styles.onlineStatus}>{t('start.generating_code')}</p>
+      )}
+
+      {/* Host: waiting for opponent */}
+      {subMode === 'host' && status === 'waiting' && (
+        <div className={styles.onlineCodeBox}>
+          <span className={styles.onlineCodeLabel}>{t('start.room_code')}</span>
+          <strong className={styles.onlineCode}>{roomCode}</strong>
+          <p className={styles.onlineStatus}>{t('start.waiting_opponent')}</p>
+        </div>
+      )}
+
+      {/* Join: input + connect */}
+      {subMode === 'join' && status === 'idle' && (
+        <div className={styles.onlineJoinRow}>
+          <input
+            className={styles.nameInput}
+            type="text"
+            placeholder={t('start.enter_room_code')}
+            value={roomCode}
+            onChange={e => setRoomCode(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleConnect()}
+          />
+          <button className={`${styles.modeBtn} ${styles.modeBtnActive}`} onClick={handleConnect}>
+            {t('start.connect')}
+          </button>
+        </div>
+      )}
+
+      {/* Join: connecting */}
+      {subMode === 'join' && status === 'connecting' && (
+        <p className={styles.onlineStatus}>{t('start.connecting')}</p>
+      )}
+
+      {/* Back button */}
+      {subMode !== null && (
+        <button
+          className={styles.onlineBack}
+          onClick={() => { setSubMode(null); setStatus('idle'); setRoomCode('') }}
+        >
+          ← Back
+        </button>
+      )}
     </div>
   )
 }

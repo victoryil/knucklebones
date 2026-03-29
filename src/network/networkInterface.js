@@ -1,49 +1,33 @@
-/**
- * NetworkInterface — Phase 1: stub (local only)
- *
- * Phase 2 integration guide (WebSocket):
- *  1. Replace connect() with `ws = new WebSocket(serverUrl)` and resolve on open.
- *  2. sendMove() emits `{ type: 'PLACE_DICE', col }` over the socket.
- *  3. onOpponentMove() registers a listener; dispatch PLACE_DICE locally when received.
- *  4. onGameState() syncs full state on reconnect.
- *
- * Phase 2 integration guide (WebRTC / peer-to-peer):
- *  1. Use a signaling server for offer/answer exchange.
- *  2. Replace ws with an RTCDataChannel for low-latency local network play.
- *
- * To add a bot:
- *  1. Import a botStrategy(state) → colIndex function.
- *  2. In useGameReducer, after ROLL_DICE when mode==='bot' and currentPlayer===1,
- *     schedule a setTimeout(() => dispatch({ type: 'PLACE_DICE', col: botStrategy(state) }), 600).
- */
-export const NetworkInterface = {
-  /** @param {string} _roomId */
-  connect: async (_roomId) => {
-    // TODO Phase 2: open WebSocket/WebRTC connection
-    return Promise.resolve()
-  },
+import Peer from 'peerjs'
 
-  disconnect: () => {
-    // TODO Phase 2: close connection
-  },
+let peer = null, conn = null
+let _onOpponentMove = null, _onDisconnect = null
 
-  /** @param {number} _colIndex */
-  sendMove: (_colIndex) => {
-    // TODO Phase 2: emit move to opponent
-  },
-
-  /** @param {(colIndex: number) => void} _callback */
-  onOpponentMove: (_callback) => {
-    // TODO Phase 2: subscribe to remote moves
-    return () => {} // returns unsubscribe function
-  },
-
-  /** @param {(state: object) => void} _callback */
-  onGameState: (_callback) => {
-    // TODO Phase 2: subscribe to full state sync
-    return () => {}
-  },
-
-  isConnected: () => false,
-  isOnline: () => false,
+export function host(onConnect) {
+  peer = new Peer()
+  return new Promise(resolve => {
+    peer.on('open', id => resolve(id))
+    peer.on('connection', c => { conn = c; _wireConn(); onConnect?.() })
+  })
 }
+
+export function join(roomCode, onConnect) {
+  peer = new Peer()
+  return new Promise(resolve => {
+    peer.on('open', () => {
+      conn = peer.connect(roomCode)
+      conn.on('open', () => { _wireConn(); onConnect?.(); resolve() })
+    })
+  })
+}
+
+function _wireConn() {
+  conn.on('data', msg => _onOpponentMove?.(msg))
+  conn.on('close', () => _onDisconnect?.())
+}
+
+export function sendMove(msg)       { conn?.send(msg) }
+export function onOpponentMove(cb)  { _onOpponentMove = cb }
+export function onDisconnect(cb)    { _onDisconnect = cb }
+export function isConnected()       { return conn?.open ?? false }
+export function disconnect()        { conn?.close(); peer?.destroy(); peer = conn = null }

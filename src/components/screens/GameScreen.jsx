@@ -8,16 +8,20 @@ import { playDestruction } from '@/audio/soundManager.js'
 import { t } from '@/i18n/index.js'
 import styles from './GameScreen.module.css'
 
-export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) {
+export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu, playerIndex = 0 }) {
   const {
     phase, currentPlayer, boards, scores, columnScores,
     currentRoll, playerNames, lastDestroyed, mode,
   } = state
 
+  const isMyTurn = mode !== 'online' || currentPlayer === playerIndex
+  const guardedOnRoll  = isMyTurn ? onRoll  : () => {}
+  const guardedOnPlace = isMyTurn ? onPlace : () => {}
+
   const canvasRef   = useRef(null)
   const [showInfo, setShowInfo] = useState(false)
 
-  useThreeScene(canvasRef, boards, { phase, currentPlayer, onPlace }, lastDestroyed)
+  useThreeScene(canvasRef, boards, { phase, currentPlayer, onPlace: guardedOnPlace }, lastDestroyed)
   useBotPlayer(state, onRoll, onPlace)
 
   // Space bar → roll (only for the human player)
@@ -25,6 +29,7 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
     const onKey = (e) => {
       if (e.code !== 'Space' || e.repeat) return
       if (mode === 'bot' && currentPlayer === 1) return   // bot's turn, ignore
+      if (!isMyTurn) return                               // online: not my turn
       if (phase === PHASES.ROLLING) {
         e.preventDefault()
         onRoll()
@@ -32,7 +37,7 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, currentPlayer, mode, onRoll])
+  }, [phase, currentPlayer, mode, isMyTurn, onRoll])
 
   // Play destruction sound
   const prevDestroyedRef = useRef([])
@@ -86,8 +91,8 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
           phase={phase}
           currentRoll={currentPlayer === 0 ? currentRoll : null}
           board={boards[0]}
-          onRoll={onRoll}
-          onPlace={onPlace}
+          onRoll={guardedOnRoll}
+          onPlace={guardedOnPlace}
         />
 
         <div className={styles.canvasWrap}>
@@ -103,8 +108,8 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
           phase={phase}
           currentRoll={currentPlayer === 1 ? currentRoll : null}
           board={boards[1]}
-          onRoll={onRoll}
-          onPlace={onPlace}
+          onRoll={guardedOnRoll}
+          onPlace={guardedOnPlace}
           isBot={mode === 'bot'}
         />
       </div>

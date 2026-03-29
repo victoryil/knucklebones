@@ -42,7 +42,7 @@ export function gameReducer(state, action) {
   switch (action.type) {
     case 'ROLL_DICE': {
       if (state.phase !== PHASES.ROLLING) return state
-      const roll = Math.floor(Math.random() * 6) + 1
+      const roll = action.value ?? (Math.floor(Math.random() * 6) + 1)
       return { ...state, phase: PHASES.PLACING, currentRoll: roll, lastDestroyed: [] }
     }
 
