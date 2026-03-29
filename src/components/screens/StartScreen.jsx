@@ -4,34 +4,31 @@ import { t } from '@/i18n/index.js'
 import styles from './StartScreen.module.css'
 
 export function StartScreen({ onStart, locale, onToggleLocale }) {
-  const [p1, setP1] = useState('')
-  const [p2, setP2] = useState('')
+  const [p1, setP1]   = useState('')
+  const [mode, setMode] = useState('local')   // 'local' | 'bot'
 
   const handleStart = () => {
     onStart({
       playerNames: [
         p1.trim() || t('start.player1_placeholder'),
-        p2.trim() || t('start.player2_placeholder'),
+        mode === 'bot' ? t('start.bot_name') : t('start.player2_placeholder'),
       ],
-      mode: 'local',
+      mode,
     })
   }
 
   return (
     <div className={styles.screen}>
-      {/* Ambient particles */}
       <div className={styles.particles} aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className={styles.particle} style={{ '--i': i }} />
         ))}
       </div>
 
-      {/* Language toggle — top-right corner */}
       <button
         className={styles.localeBtn}
         onClick={onToggleLocale}
         aria-label={locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
-        title={locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
       >
         {locale === 'es' ? 'EN' : 'ES'}
       </button>
@@ -39,14 +36,34 @@ export function StartScreen({ onStart, locale, onToggleLocale }) {
       <main className={styles.main}>
         {/* Logo */}
         <div className={styles.logoArea}>
-          <div className={styles.skullDecor} aria-hidden="true">
-            <SkullSvg size={64} />
-          </div>
+          <div className={styles.skullDecor} aria-hidden="true"><SkullSvg size={64} /></div>
           <h1 className={styles.title}>Knucklebones</h1>
           <p className={styles.subtitle}>{t('start.subtitle')}</p>
         </div>
 
-        {/* Player names */}
+        {/* Mode selector */}
+        <div className={styles.modeRow}>
+          <button
+            className={`${styles.modeBtn} ${mode === 'local' ? styles.modeBtnActive : ''}`}
+            onClick={() => setMode('local')}
+          >
+            {t('start.play_local')}
+          </button>
+          <button
+            className={`${styles.modeBtn} ${mode === 'bot' ? styles.modeBtnActive : ''}`}
+            onClick={() => setMode('bot')}
+          >
+            {t('start.play_bot')}
+          </button>
+          <div className={styles.tooltipWrap}>
+            <button className={`${styles.modeBtn} ${styles.modeBtnDisabled}`} disabled>
+              {t('start.play_online')}
+            </button>
+            <span className={styles.tooltip}>{t('start.coming_soon')}</span>
+          </div>
+        </div>
+
+        {/* Player name inputs */}
         <div className={styles.namesArea}>
           <div className={styles.nameField}>
             <label className={styles.nameLabel} htmlFor="p1name">
@@ -63,44 +80,54 @@ export function StartScreen({ onStart, locale, onToggleLocale }) {
               onChange={e => setP1(e.target.value)}
             />
           </div>
-          <div className={styles.nameField}>
-            <label className={styles.nameLabel} htmlFor="p2name">
-              <span className={styles.playerDot} style={{ background: 'var(--p2-color)' }} />
-              {t('start.player2_name')}
-            </label>
-            <input
-              id="p2name"
-              className={styles.nameInput}
-              type="text"
-              maxLength={20}
-              placeholder={t('start.player2_placeholder')}
-              value={p2}
-              onChange={e => setP2(e.target.value)}
-            />
-          </div>
+
+          {mode === 'local' ? (
+            <LocalP2Field locale={locale} />
+          ) : (
+            <BotLabel />
+          )}
         </div>
 
-        {/* Mode buttons */}
-        <div className={styles.buttons}>
-          <Button onClick={handleStart} className={styles.mainBtn}>
-            {t('start.play_local')}
-          </Button>
-          <div className={styles.soonGroup}>
-            <div className={styles.tooltipWrap}>
-              <Button variant="ghost" disabled>{t('start.play_online')}</Button>
-              <span className={styles.tooltip}>{t('start.coming_soon')}</span>
-            </div>
-            <div className={styles.tooltipWrap}>
-              <Button variant="ghost" disabled>{t('start.play_bot')}</Button>
-              <span className={styles.tooltip}>{t('start.coming_soon')}</span>
-            </div>
-          </div>
-        </div>
+        <Button onClick={handleStart} className={styles.mainBtn}>
+          {mode === 'bot' ? `▶ ${t('start.play_bot')}` : `▶ ${t('start.play_local')}`}
+        </Button>
       </main>
 
       <footer className={styles.footer}>
         <p>{t('disclaimer.text')}</p>
       </footer>
+    </div>
+  )
+}
+
+/** Separate component so the input state survives mode switch back to local */
+function LocalP2Field({ locale }) {
+  const [p2, setP2] = useState('')
+  return (
+    <div className={styles.nameField}>
+      <label className={styles.nameLabel} htmlFor="p2name">
+        <span className={styles.playerDot} style={{ background: 'var(--p2-color)' }} />
+        {t('start.player2_name')}
+      </label>
+      <input
+        id="p2name"
+        className={styles.nameInput}
+        type="text"
+        maxLength={20}
+        placeholder={t('start.player2_placeholder')}
+        value={p2}
+        onChange={e => setP2(e.target.value)}
+      />
+    </div>
+  )
+}
+
+function BotLabel() {
+  return (
+    <div className={styles.botLabelWrap}>
+      <span className={styles.playerDot} style={{ background: 'var(--p2-color)' }} />
+      <span className={styles.botLabelText}>{t('start.bot_name')}</span>
+      <span className={styles.botChip}>IA</span>
     </div>
   )
 }

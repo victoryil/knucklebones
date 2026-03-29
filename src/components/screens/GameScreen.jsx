@@ -2,19 +2,39 @@ import { useEffect, useRef, useState } from 'react'
 import { PlayerPanel } from '@/components/game/PlayerPanel.jsx'
 import { InfoModal, InfoButton } from '@/components/ui/InfoModal.jsx'
 import { useThreeScene } from '@/hooks/useThreeScene.js'
+import { useBotPlayer } from '@/hooks/useBotPlayer.js'
 import { PHASES } from '@/game/constants.js'
 import { playDestruction } from '@/audio/soundManager.js'
 import { t } from '@/i18n/index.js'
 import styles from './GameScreen.module.css'
 
 export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) {
-  const { phase, currentPlayer, boards, scores, columnScores, currentRoll, playerNames, lastDestroyed } = state
-  const canvasRef    = useRef(null)
+  const {
+    phase, currentPlayer, boards, scores, columnScores,
+    currentRoll, playerNames, lastDestroyed, mode,
+  } = state
+
+  const canvasRef   = useRef(null)
   const [showInfo, setShowInfo] = useState(false)
 
   useThreeScene(canvasRef, boards, { phase, currentPlayer, onPlace }, lastDestroyed)
+  useBotPlayer(state, onRoll, onPlace)
 
-  // Play destruction sound whenever lastDestroyed has entries
+  // Space bar → roll (only for the human player)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.code !== 'Space' || e.repeat) return
+      if (mode === 'bot' && currentPlayer === 1) return   // bot's turn, ignore
+      if (phase === PHASES.ROLLING) {
+        e.preventDefault()
+        onRoll()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [phase, currentPlayer, mode, onRoll])
+
+  // Play destruction sound
   const prevDestroyedRef = useRef([])
   useEffect(() => {
     if (lastDestroyed.length > 0 && lastDestroyed !== prevDestroyedRef.current) {
@@ -23,7 +43,7 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
     prevDestroyedRef.current = lastDestroyed
   }, [lastDestroyed])
 
-  // Advance animation phase after a short delay
+  // Advance animation phase
   useEffect(() => {
     if (phase === PHASES.ANIMATING) {
       const id = setTimeout(onAnimationDone, 700)
@@ -31,21 +51,31 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
     }
   }, [phase, onAnimationDone])
 
+  const isBotTurn = mode === 'bot' && currentPlayer === 1
+  const p0Color   = 'var(--p1-color)'
+  const p1Color   = 'var(--p2-color)'
+
   return (
     <div className={styles.screen}>
-      {/* Turn indicator strip */}
+      {/* Turn strip */}
       <div
         className={styles.turnStrip}
-        style={{ '--tc': currentPlayer === 0 ? 'var(--p1-color)' : 'var(--p2-color)' }}
+        style={{ '--tc': currentPlayer === 0 ? p0Color : p1Color }}
       >
-        <span>{t('game.turn_of')} <strong>{playerNames[currentPlayer]}</strong></span>
+        <span>
+          {t('game.turn_of')} <strong>{playerNames[currentPlayer]}</strong>
+          {isBotTurn && <em className={styles.botThinking}> — {t('game.bot_thinking')}</em>}
+        </span>
         <div className={styles.stripRight}>
+          {!isBotTurn && phase === PHASES.ROLLING && (
+            <span className={styles.spaceHint}>{t('game.space_hint')}</span>
+          )}
           <InfoButton onClick={() => setShowInfo(true)} />
           <button className={styles.menuBtn} onClick={onMenu}>Menú</button>
         </div>
       </div>
 
-      {/* Main layout: panel | canvas | panel */}
+      {/* Main layout */}
       <div className={styles.main}>
         <PlayerPanel
           playerIndex={0}
@@ -75,10 +105,10 @@ export function GameScreen({ state, onRoll, onPlace, onAnimationDone, onMenu }) 
           board={boards[1]}
           onRoll={onRoll}
           onPlace={onPlace}
+          isBot={mode === 'bot'}
         />
       </div>
 
-      {/* Rules modal */}
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
     </div>
   )

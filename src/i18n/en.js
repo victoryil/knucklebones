@@ -11,6 +11,9 @@ const en = {
   'start.player2_name': 'Player 2 Name',
   'start.player1_placeholder': 'Player 1',
   'start.player2_placeholder': 'Player 2',
+  'start.bot_name': 'AI Bot',
+  'game.bot_thinking': 'Thinking…',
+  'game.space_hint': 'Space to roll',
 
   'game.your_turn': 'Your turn',
   'game.turn_of': 'Turn:',

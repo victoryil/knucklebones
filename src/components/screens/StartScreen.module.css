@@ -166,25 +166,81 @@
   background: rgba(201, 168, 76, 0.05);
 }
 
-/* Buttons */
-.buttons {
+/* Mode selector row */
+.modeRow {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  gap: 6px;
   width: 100%;
 }
 
+.modeBtn {
+  flex: 1;
+  padding: 9px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.modeBtn:hover:not(:disabled):not(.modeBtnDisabled) {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.modeBtnActive {
+  background: rgba(201, 168, 76, 0.12);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold-bright);
+}
+
+.modeBtnDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Bot player label */
+.botLabelWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 74, 106, 0.07);
+  border: 1px solid rgba(255, 74, 106, 0.25);
+  border-radius: 4px;
+}
+
+.botLabelText {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--p2-color);
+  flex: 1;
+}
+
+.botChip {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  background: var(--p2-color);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+/* Main play button */
 .mainBtn {
   width: 100%;
   padding: 16px 28px;
   font-size: 1.05rem;
-}
-
-.soonGroup {
-  display: flex;
-  gap: 12px;
-  width: 100%;
 }
 
 .tooltipWrap {

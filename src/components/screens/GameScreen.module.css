@@ -28,6 +28,20 @@
   gap: 8px;
 }
 
+.spaceHint {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
+.botThinking {
+  font-style: italic;
+  color: var(--p2-color);
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+
 .turnStrip strong {
   color: var(--tc, var(--accent-gold));
 }

@@ -10,25 +10,21 @@ import styles from './App.module.css'
 const SCREENS = { START: 'start', GAME: 'game', GAMEOVER: 'gameover' }
 
 export default function App() {
-  const [screen, setScreen]       = useState(SCREENS.START)
-  const [playerNames, setPlayerNames] = useState(['Jugador 1', 'Jugador 2'])
-  const [locale, setLocale]       = useState(getCurrentLocale)
+  const [screen, setScreen] = useState(SCREENS.START)
+  const [locale, setLocale] = useState(getCurrentLocale)
 
-  const { state, rollDice, placeDice, animationDone, resetGame, setPlayerNames: dispatchNames } =
-    useGameReducer(playerNames)
+  const { state, startGame, rollDice, placeDice, animationDone, resetGame } = useGameReducer()
 
   const handleToggleLocale = useCallback(() => {
     const next = locale === 'es' ? 'en' : 'es'
-    i18nSetLocale(next)   // update module variable first…
-    setLocale(next)        // …then trigger React re-render
+    i18nSetLocale(next)
+    setLocale(next)
   }, [locale])
 
-  const handleStart = useCallback(({ playerNames: names }) => {
-    setPlayerNames(names)
-    dispatchNames(names)
-    resetGame()
+  const handleStart = useCallback(({ playerNames, mode }) => {
+    startGame(playerNames, mode)
     setScreen(SCREENS.GAME)
-  }, [dispatchNames, resetGame])
+  }, [startGame])
 
   const handleMenu    = useCallback(() => setScreen(SCREENS.START), [])
   const handleRematch = useCallback(() => { resetGame(); setScreen(SCREENS.GAME) }, [resetGame])
@@ -37,7 +33,6 @@ export default function App() {
     ? SCREENS.GAMEOVER : screen
 
   return (
-    // key={locale} forces full re-render of child tree when language switches
     <div key={locale} className={styles.app}>
       {currentScreen === SCREENS.START && (
         <StartScreen

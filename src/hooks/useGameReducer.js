@@ -1,11 +1,14 @@
 import { useReducer, useCallback } from 'react'
 import { gameReducer, getInitialState } from '@/game/gameReducer.js'
-import { PHASES } from '@/game/constants.js'
 
-export function useGameReducer(playerNames) {
+export function useGameReducer() {
   const [state, dispatch] = useReducer(gameReducer, undefined, () =>
-    getInitialState(playerNames),
+    getInitialState(),
   )
+
+  const startGame = useCallback((playerNames, mode) => {
+    dispatch({ type: 'START_GAME', playerNames, mode })
+  }, [])
 
   const rollDice = useCallback(() => {
     dispatch({ type: 'ROLL_DICE' })
@@ -23,9 +26,5 @@ export function useGameReducer(playerNames) {
     dispatch({ type: 'RESET_GAME' })
   }, [])
 
-  const setPlayerNames = useCallback((names) => {
-    dispatch({ type: 'SET_PLAYER_NAMES', names })
-  }, [])
-
-  return { state, rollDice, placeDice, animationDone, resetGame, setPlayerNames }
+  return { state, startGame, rollDice, placeDice, animationDone, resetGame }
 }

@@ -19,7 +19,7 @@ function emptyBoard() {
   return Array.from({ length: COLS }, () => Array(SLOTS).fill(null))
 }
 
-export function getInitialState(playerNames = ['Jugador 1', 'Jugador 2']) {
+export function getInitialState(playerNames = ['Jugador 1', 'Jugador 2'], mode = 'local') {
   const boards = [emptyBoard(), emptyBoard()]
   return {
     phase: PHASES.ROLLING,
@@ -31,10 +31,10 @@ export function getInitialState(playerNames = ['Jugador 1', 'Jugador 2']) {
       calcAllColumnScores(boards[1]),
     ],
     currentRoll: null,
-    lastDestroyed: [],   // [{player, col, positions}]
+    lastDestroyed: [],
     winner: null,
     playerNames,
-    mode: 'local',
+    mode,
   }
 }
 
@@ -125,7 +125,12 @@ export function gameReducer(state, action) {
     }
 
     case 'RESET_GAME': {
-      return getInitialState(state.playerNames)
+      // Preserve playerNames and mode for rematch
+      return getInitialState(state.playerNames, state.mode)
+    }
+
+    case 'START_GAME': {
+      return getInitialState(action.playerNames, action.mode ?? 'local')
     }
 
     case 'SET_PLAYER_NAMES': {

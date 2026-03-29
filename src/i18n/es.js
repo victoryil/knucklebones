@@ -13,6 +13,9 @@ const es = {
   'start.player2_name': 'Nombre del Jugador 2',
   'start.player1_placeholder': 'Jugador 1',
   'start.player2_placeholder': 'Jugador 2',
+  'start.bot_name': 'Bot IA',
+  'game.bot_thinking': 'Pensando…',
+  'game.space_hint': 'Espacio para tirar',
 
   // Game Screen
   'game.your_turn': 'Tu turno',

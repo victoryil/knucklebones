@@ -30,9 +30,10 @@ export function PlayerPanel({
   board,
   onRoll,
   onPlace,
+  isBot = false,   // hides interactive controls for the bot player
 }) {
-  const canRoll  = isMyTurn && phase === 'rolling'
-  const canPlace = isMyTurn && phase === 'placing'
+  const canRoll  = isMyTurn && phase === 'rolling'  && !isBot
+  const canPlace = isMyTurn && phase === 'placing'  && !isBot
   const color    = playerIndex === 0 ? 'var(--p1-color)' : 'var(--p2-color)'
 
   return (
@@ -80,18 +81,20 @@ export function PlayerPanel({
         )}
       </div>
 
-      {/* Roll button */}
-      <button
-        className={`${styles.rollBtn} ${!canRoll ? styles.disabled : ''}`}
-        disabled={!canRoll}
-        onClick={canRoll ? onRoll : undefined}
-        aria-label={t('game.roll')}
-      >
-        {t('game.roll')}
-      </button>
+      {/* Roll button — hidden for bot */}
+      {!isBot && (
+        <button
+          className={`${styles.rollBtn} ${!canRoll ? styles.disabled : ''}`}
+          disabled={!canRoll}
+          onClick={canRoll ? onRoll : undefined}
+          aria-label={t('game.roll')}
+        >
+          {t('game.roll')}
+        </button>
+      )}
 
-      {/* Column select buttons */}
-      <div className={styles.colBtns}>
+      {/* Column select buttons — hidden for bot */}
+      <div className={styles.colBtns} style={isBot ? { visibility: 'hidden' } : undefined}>
         {board.map((col, ci) => {
           const full     = isColumnFull(col)
           const enabled  = canPlace && !full
