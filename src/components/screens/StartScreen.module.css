@@ -300,6 +300,29 @@
   color: #ff6b85;
 }
 
+/* Tutorial link button */
+.tutorialBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.15s;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: transparent;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.tutorialBtn:hover {
+  color: var(--accent-gold);
+  text-decoration-color: var(--accent-gold);
+}
+
 /* Main play button */
 .mainBtn {
   width: 100%;

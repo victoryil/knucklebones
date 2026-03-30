@@ -162,6 +162,94 @@
 .goldText { color: #d4aa40; font-weight: 600; }
 .blueText { color: #6699ff; font-weight: 600; }
 
+/* ── Tabs ──────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 6px 14px 8px;
+  color: var(--text-dim);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover { color: var(--text-secondary); }
+
+.tabActive {
+  color: var(--accent-gold-bright);
+  border-bottom-color: var(--accent-gold);
+}
+
+/* ── Controller diagram ────────────────────────────────────────── */
+.controlsHint {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+.controlsDiagram {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 4px;
+  margin-bottom: 16px;
+}
+
+.controllerSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.controlsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.controlIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 3px 6px;
+  border: 1.5px solid;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.controlLabel {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
 .disclaimer {
   margin-top: 20px;
   padding-top: 12px;

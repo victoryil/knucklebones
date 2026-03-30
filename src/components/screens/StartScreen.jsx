@@ -6,7 +6,7 @@ import { settings, updateSetting } from '@/settings/store.js'
 import { t } from '@/i18n/index.js'
 import styles from './StartScreen.module.css'
 
-export function StartScreen({ onStart, locale, onToggleLocale, force2D, onToggle2D }) {
+export function StartScreen({ onStart, locale, onToggleLocale, force2D, onToggle2D, onTutorial }) {
   // Read ?room= once, before any state initialisation
   const [initialJoinCode] = useState(
     () => new URLSearchParams(window.location.search).get('room') ?? ''
@@ -124,6 +124,10 @@ export function StartScreen({ onStart, locale, onToggleLocale, force2D, onToggle
             {mode === 'bot' ? `▶ ${t('start.play_bot')}` : `▶ ${t('start.play_local')}`}
           </Button>
         )}
+
+        <button className={styles.tutorialBtn} onClick={onTutorial}>
+          {t('start.tutorial')}
+        </button>
       </main>
 
       <footer className={styles.footer}>

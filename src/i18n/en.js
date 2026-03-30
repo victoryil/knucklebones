@@ -24,6 +24,7 @@ const en = {
   'start.player2_name': 'Player 2 Name',
   'start.player1_placeholder': 'Player 1',
   'start.player2_placeholder': 'Player 2',
+  'start.tutorial': '📖 Tutorial — Learn to play',
   'start.bot_name': 'AI Bot',
   'difficulty.easy': 'Easy',
   'difficulty.normal': 'Normal',

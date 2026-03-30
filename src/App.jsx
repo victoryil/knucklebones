@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { StartScreen } from '@/components/screens/StartScreen.jsx'
 import { GameScreen } from '@/components/screens/GameScreen.jsx'
 import { GameOverScreen } from '@/components/screens/GameOverScreen.jsx'
+import { TutorialScreen } from '@/components/screens/TutorialScreen.jsx'
 import { useGameReducer } from '@/hooks/useGameReducer.js'
 import { audioEngine } from '@/audio/AudioEngine.js'
 import { disconnect } from '@/network/networkInterface.js'
@@ -9,7 +10,7 @@ import { PHASES } from '@/game/constants.js'
 import { setLocale as i18nSetLocale, getCurrentLocale } from '@/i18n/index.js'
 import styles from './App.module.css'
 
-const SCREENS = { START: 'start', GAME: 'game', GAMEOVER: 'gameover' }
+const SCREENS = { START: 'start', GAME: 'game', GAMEOVER: 'gameover', TUTORIAL: 'tutorial' }
 
 export default function App() {
   const [screen, setScreen] = useState(SCREENS.START)
@@ -80,6 +81,12 @@ export default function App() {
 
   return (
     <div key={locale} className={styles.app}>
+      {currentScreen === SCREENS.TUTORIAL && (
+        <TutorialScreen
+          onBack={() => setScreen(SCREENS.START)}
+          onPlay={() => setScreen(SCREENS.START)}
+        />
+      )}
       {currentScreen === SCREENS.START && (
         <StartScreen
           onStart={handleStart}
@@ -87,6 +94,7 @@ export default function App() {
           onToggleLocale={handleToggleLocale}
           force2D={force2D}
           onToggle2D={handleToggle2D}
+          onTutorial={() => setScreen(SCREENS.TUTORIAL)}
         />
       )}
       {currentScreen === SCREENS.GAME && (
