@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { PlayerPanel } from '@/components/game/PlayerPanel.jsx'
 import { Board2D } from '@/components/game/Board2D.jsx'
+import { EmoteBar, EMOTES } from '@/components/game/EmoteBar.jsx'
 import { InfoModal, InfoButton } from '@/components/ui/InfoModal.jsx'
 import { SettingsPanel } from '@/components/ui/SettingsPanel.jsx'
 import { PauseOverlay } from './PauseOverlay.jsx'
@@ -9,6 +10,7 @@ import { useBotPlayer } from '@/hooks/useBotPlayer.js'
 import { useGamepad } from '@/hooks/useGamepad.js'
 import { PHASES, isColumnFull } from '@/game/constants.js'
 import { audioEngine } from '@/audio/audioEngine.js'
+import { onEmoteReceived } from '@/network/networkInterface.js'
 import { t } from '@/i18n/index.js'
 import styles from './GameScreen.module.css'
 
@@ -49,6 +51,29 @@ export function GameScreen({
   const [showInfo,     setShowInfo]     = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
+
+  // ── Emotes (online only) ──────────────────────────────────────────────────
+  const [incomingEmote, setIncomingEmote] = useState(null) // { emote, name, leaving }
+  const incomingTimers = useRef({})
+
+  useEffect(() => {
+    if (mode !== 'online') return
+    onEmoteReceived(msg => {
+      const emote = EMOTES.find(e => e.id === msg.id)
+      if (!emote) return
+      // Clear any pending leave animation and set new emote
+      clearTimeout(incomingTimers.current.leave)
+      clearTimeout(incomingTimers.current.remove)
+      setIncomingEmote({ emote, name: playerNames[1 - playerIndex], leaving: false })
+      // Start leave animation after 2.2s, remove after 2.5s
+      incomingTimers.current.leave  = setTimeout(() => setIncomingEmote(e => e && { ...e, leaving: true }),  2200)
+      incomingTimers.current.remove = setTimeout(() => setIncomingEmote(null), 2500)
+    })
+    return () => {
+      clearTimeout(incomingTimers.current.leave)
+      clearTimeout(incomingTimers.current.remove)
+    }
+  }, [mode, playerNames, playerIndex])
 
   // Pass a non-placing phase to the scene when it's not the human's turn so
   // the 3D raycaster stays inactive (no highlights, no click processing).
@@ -193,6 +218,7 @@ export function GameScreen({
             />
             <div className={styles.controls}>
               <InfoButton onClick={() => setShowInfo(true)} />
+              {mode === 'online' && <EmoteBar onSent={() => {}} />}
               <button
                 className={styles.settingsBtn}
                 onClick={() => setShowSettings(s => !s)}
@@ -252,6 +278,7 @@ export function GameScreen({
 
               <div className={styles.controls}>
                 <InfoButton onClick={() => setShowInfo(true)} />
+                {mode === 'online' && <EmoteBar onSent={() => {}} />}
                 <button
                   className={styles.settingsBtn}
                   onClick={() => setShowSettings(s => !s)}
@@ -277,6 +304,16 @@ export function GameScreen({
           </>
         )}
       </div>
+
+      {incomingEmote && (
+        <div className={`${styles.emoteToast} ${incomingEmote.leaving ? styles.emoteToastLeave : ''}`}>
+          <span className={styles.emoteToastEmoji}>{incomingEmote.emote.emoji}</span>
+          <div className={styles.emoteToastText}>
+            <span className={styles.emoteToastName}>{incomingEmote.name}</span>
+            <span className={styles.emoteToastLabel}>{t(incomingEmote.emote.labelKey)}</span>
+          </div>
+        </div>
+      )}
 
       {showInfo     && <InfoModal onClose={() => setShowInfo(false)} />}
       {showSettings && (

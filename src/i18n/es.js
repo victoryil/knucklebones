@@ -61,6 +61,16 @@ const es = {
   'pause.surrender': '⚑ Rendirse',
   'pause.menu': '← Menú Principal',
 
+  // Emotes
+  'emote.open':      'Enviar emote',
+  'emote.cooldown':  'Espera un momento…',
+  'emote.gg':        '¡GG!',
+  'emote.good_move': '¡Buena jugada!',
+  'emote.oops':      '¡Maldición!',
+  'emote.haha':      '¡Jaja!',
+  'emote.rematch':   '¡Revancha!',
+  'emote.luck':      '¡Suerte!',
+
   // Misc
   'column.aria': 'Colocar dado en columna',
   'board.full': 'Columna llena',

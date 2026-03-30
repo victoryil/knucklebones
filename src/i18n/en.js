@@ -57,6 +57,16 @@ const en = {
   'pause.surrender': '⚑ Surrender',
   'pause.menu': '← Main Menu',
 
+  // Emotes
+  'emote.open':      'Send emote',
+  'emote.cooldown':  'Wait a moment…',
+  'emote.gg':        'GG!',
+  'emote.good_move': 'Nice move!',
+  'emote.oops':      'Oh no!',
+  'emote.haha':      'Ha ha!',
+  'emote.rematch':   'Rematch!',
+  'emote.luck':      'Good luck!',
+
   'column.aria': 'Place die in column',
   'board.full': 'Column full',
 
