@@ -165,6 +165,13 @@
   color: var(--text-secondary);
 }
 
+.record {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+
 .buttons {
   display: flex;
   gap: 10px;

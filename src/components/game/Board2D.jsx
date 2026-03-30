@@ -4,6 +4,15 @@ import { PHASES } from '@/game/constants.js'
 import { t } from '@/i18n/index.js'
 import styles from './Board2D.module.css'
 
+// ── Danger column detection ────────────────────────────────────────────────
+function getDangerCols(board) {
+  return board.map(col => {
+    const counts = {}
+    for (const v of col) { if (v !== null) counts[v] = (counts[v] || 0) + 1 }
+    return Object.values(counts).some(c => c >= 2)
+  })
+}
+
 // ── Board grid ─────────────────────────────────────────────────────────────
 // Slot 0 is nearest to the centre divider (matching the 3D layout).
 // • Opponent (player 1) at top  → slots run 2→1→0 top-to-bottom so slot 0 is
@@ -15,7 +24,7 @@ const SLOT_ORDER = {
   1: [2, 1, 0],   // player 1 — nearest slot at bottom
 }
 
-function BoardGrid({ board, playerIndex, columnScores, canPlace, onPlace }) {
+function BoardGrid({ board, playerIndex, columnScores, canPlace, onPlace, dangerCols = [] }) {
   const isP0   = playerIndex === 0
   const order  = SLOT_ORDER[playerIndex]
 
@@ -41,7 +50,7 @@ function BoardGrid({ board, playerIndex, columnScores, canPlace, onPlace }) {
           return (
             <div
               key={ci}
-              className={`${styles.gridCol} ${canPlaceHere ? styles.gridColActive : ''}`}
+              className={`${styles.gridCol} ${canPlaceHere ? styles.gridColActive : ''} ${dangerCols[ci] ? styles.gridColDanger : ''}`}
             >
               {order.map((si) => {
                 const val = col[si]
@@ -94,6 +103,7 @@ export function Board2D({ state, onRoll, onPlace, mode, selectedCol = 0 }) {
           columnScores={columnScores[1]}
           canPlace={false}
           onPlace={null}
+          dangerCols={phase === PHASES.PLACING && currentPlayer === 0 ? getDangerCols(boards[1]) : []}
         />
       </div>
 

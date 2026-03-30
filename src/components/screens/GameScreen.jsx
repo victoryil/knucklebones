@@ -3,6 +3,7 @@ import { PlayerPanel } from '@/components/game/PlayerPanel.jsx'
 import { Board2D } from '@/components/game/Board2D.jsx'
 import { InfoModal, InfoButton } from '@/components/ui/InfoModal.jsx'
 import { SettingsPanel } from '@/components/ui/SettingsPanel.jsx'
+import { PauseOverlay } from './PauseOverlay.jsx'
 import { useThreeScene } from '@/hooks/useThreeScene.js'
 import { useBotPlayer } from '@/hooks/useBotPlayer.js'
 import { useGamepad } from '@/hooks/useGamepad.js'
@@ -47,6 +48,7 @@ export function GameScreen({
   const canvasRef      = useRef(null)
   const [showInfo,     setShowInfo]     = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
 
   // Pass a non-placing phase to the scene when it's not the human's turn so
   // the 3D raycaster stays inactive (no highlights, no click processing).
@@ -57,7 +59,7 @@ export function GameScreen({
     lastDestroyed,
   )
 
-  useBotPlayer(state, onRoll, onPlace)   // bot always uses raw handlers
+  useBotPlayer(state, onRoll, onPlace, isPaused)   // bot always uses raw handlers
 
   // ── Gamepad ───────────────────────────────────────────────────────────────
   const gpColPrev = useCallback(() => {
@@ -98,7 +100,9 @@ export function GameScreen({
   // ── Keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e) => {
-      if (e.repeat || !isHumanTurn) return
+      if (e.repeat) return
+      if (e.code === 'Escape') { setIsPaused(p => !p); return }
+      if (!isHumanTurn) return
       if (e.code === 'Space' && phase === PHASES.ROLLING) {
         e.preventDefault(); onRoll()
       }
@@ -281,6 +285,14 @@ export function GameScreen({
           sceneManager={sceneRef.current}
           force2D={force2D}
           onToggle2D={onToggle2D}
+        />
+      )}
+      {isPaused && (
+        <PauseOverlay
+          onResume={() => setIsPaused(false)}
+          onSettings={() => { setIsPaused(false); setShowSettings(true) }}
+          onSurrender={() => { setIsPaused(false); onMenu() }}
+          onMenu={() => { setIsPaused(false); onMenu() }}
         />
       )}
     </div>

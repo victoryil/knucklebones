@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button.jsx'
 import { t } from '@/i18n/index.js'
+import { recordResult, getRecord } from '@/stats/statsStore.js'
+import { settings } from '@/settings/store.js'
 import styles from './GameOverScreen.module.css'
 
-export function GameOverScreen({ state, onRematch, onMenu }) {
+export function GameOverScreen({ state, onRematch, onMenu, playerIndex = 0 }) {
   const { scores, columnScores, playerNames, winner, boards } = state
   const [revealed, setRevealed] = useState(false)
 
@@ -13,6 +15,18 @@ export function GameOverScreen({ state, onRematch, onMenu }) {
   }, [])
 
   const isTie = winner === null
+
+  // Record result and get updated record
+  useEffect(() => {
+    const difficulty = settings.botDifficulty ?? 'normal'
+    const humanWon = winner === playerIndex
+    const outcome = isTie ? 'draw' : (humanWon ? 'win' : 'loss')
+    // Skip recording for local mode — no clear "human" side
+    if (state.mode !== 'local') recordResult(state.mode, difficulty, outcome)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const difficulty = settings.botDifficulty ?? 'normal'
+  const record = state.mode !== 'local' ? getRecord(state.mode, difficulty) : null
   const titleText = isTie
     ? t('gameover.tie')
     : `${playerNames[winner]} ${t('gameover.wins')}`
@@ -50,6 +64,13 @@ export function GameOverScreen({ state, onRematch, onMenu }) {
             ))}
           </div>
         </div>
+
+        {record && (
+          <p className={styles.record}>
+            {t('gameover.record')}: {record.wins}W / {record.losses}L
+            {record.draws > 0 ? ` / ${record.draws}D` : ''}
+          </p>
+        )}
 
         <div className={styles.buttons}>
           <Button onClick={onRematch}>{t('gameover.rematch')}</Button>

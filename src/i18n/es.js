@@ -52,6 +52,14 @@ const es = {
   'gameover.rematch': 'Revancha',
   'gameover.menu': 'Menú Principal',
   'gameover.final_scores': 'Puntuaciones Finales',
+  'gameover.record': 'Tu historial',
+
+  // Pause Screen
+  'pause.title': 'Pausa',
+  'pause.resume': '▶ Reanudar',
+  'pause.settings': '⚙ Ajustes',
+  'pause.surrender': '⚑ Rendirse',
+  'pause.menu': '← Menú Principal',
 
   // Misc
   'column.aria': 'Colocar dado en columna',

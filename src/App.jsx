@@ -48,6 +48,26 @@ export default function App() {
     return () => document.removeEventListener('click', init)
   }, [])
 
+  // Konami code easter egg: ↑↑↓↓←→←→BA
+  useEffect(() => {
+    const KONAMI = [
+      'ArrowUp','ArrowUp','ArrowDown','ArrowDown',
+      'ArrowLeft','ArrowRight','ArrowLeft','ArrowRight',
+      'KeyB','KeyA',
+    ]
+    let seq = []
+    const onKey = (e) => {
+      seq.push(e.code)
+      if (seq.length > KONAMI.length) seq.shift()
+      if (seq.join(',') === KONAMI.join(',')) {
+        document.body.classList.toggle('konami')
+        seq = []
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const handleToggleLocale = useCallback(() => {
     const next = locale === 'es' ? 'en' : 'es'
     i18nSetLocale(next)
@@ -118,6 +138,7 @@ export default function App() {
           state={state}
           onRematch={handleRematch}
           onMenu={handleMenu}
+          playerIndex={playerIndex}
         />
       )}
     </div>

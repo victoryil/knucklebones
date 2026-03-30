@@ -21,7 +21,7 @@ const DELAYS = {
  * @param {Function} rollDice  stable dispatch wrapper
  * @param {Function} placeDice stable dispatch wrapper
  */
-export function useBotPlayer(state, rollDice, placeDice) {
+export function useBotPlayer(state, rollDice, placeDice, isPaused = false) {
   const { phase, currentPlayer, boards, currentRoll, mode } = state
   const isBotTurn  = mode === 'bot' && currentPlayer === 1
   const difficulty = settings.botDifficulty ?? 'normal'
@@ -29,7 +29,7 @@ export function useBotPlayer(state, rollDice, placeDice) {
 
   // Rolling phase — bot waits, then rolls
   useEffect(() => {
-    if (!isBotTurn || phase !== PHASES.ROLLING) return
+    if (!isBotTurn || phase !== PHASES.ROLLING || isPaused) return
     const id = setTimeout(rollDice, delays.roll)
     return () => clearTimeout(id)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,7 +37,7 @@ export function useBotPlayer(state, rollDice, placeDice) {
 
   // Placing phase — bot evaluates using the selected strategy, then places
   useEffect(() => {
-    if (!isBotTurn || phase !== PHASES.PLACING || currentRoll === null) return
+    if (!isBotTurn || phase !== PHASES.PLACING || currentRoll === null || isPaused) return
     const col = botStrategy(boards, currentPlayer, currentRoll, difficulty)
     const id  = setTimeout(() => placeDice(col), delays.place)
     return () => clearTimeout(id)

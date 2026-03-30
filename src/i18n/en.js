@@ -48,6 +48,14 @@ const en = {
   'gameover.rematch': 'Rematch',
   'gameover.menu': 'Main Menu',
   'gameover.final_scores': 'Final Scores',
+  'gameover.record': 'Your record',
+
+  // Pause Screen
+  'pause.title': 'Paused',
+  'pause.resume': '▶ Resume',
+  'pause.settings': '⚙ Settings',
+  'pause.surrender': '⚑ Surrender',
+  'pause.menu': '← Main Menu',
 
   'column.aria': 'Place die in column',
   'board.full': 'Column full',
