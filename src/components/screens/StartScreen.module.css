@@ -1,3 +1,28 @@
+/* Settings button — absolute top-left */
+.settingsBtn {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 10;
+  background: transparent;
+  border: 1.5px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 1rem;
+  width: 34px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.settingsBtn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
 /* Language toggle button — absolute top-right */
 .localeBtn {
   position: absolute;
@@ -234,6 +259,45 @@
   color: #fff;
   padding: 2px 7px;
   border-radius: 10px;
+}
+
+/* Bot section: label + difficulty selector */
+.botSectionWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.difficultyRow {
+  display: flex;
+  gap: 6px;
+}
+
+.diffBtn {
+  flex: 1;
+  padding: 7px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.diffBtn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.diffBtnActive {
+  background: rgba(196, 30, 58, 0.12);
+  border-color: #c41e3a;
+  color: #ff6b85;
 }
 
 /* Main play button */

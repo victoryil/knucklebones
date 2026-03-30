@@ -1,18 +1,24 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button.jsx'
+import { SettingsPanel } from '@/components/ui/SettingsPanel.jsx'
 import { host, join } from '@/network/networkInterface.js'
+import { settings, updateSetting } from '@/settings/store.js'
 import { t } from '@/i18n/index.js'
 import styles from './StartScreen.module.css'
 
-export function StartScreen({ onStart, locale, onToggleLocale }) {
-  const [p1, setP1]   = useState('')
-  const [mode, setMode] = useState('local')   // 'local' | 'bot' | 'online'
+export function StartScreen({ onStart, locale, onToggleLocale, force2D, onToggle2D }) {
+  const [p1, setP1]       = useState('')
+  const [p2, setP2]       = useState('')
+  const [mode, setMode]   = useState('local')   // 'local' | 'bot' | 'online'
+  const [showSettings, setShowSettings] = useState(false)
 
   const handleStart = () => {
     onStart({
       playerNames: [
         p1.trim() || t('start.player1_placeholder'),
-        mode === 'bot' ? t('start.bot_name') : t('start.player2_placeholder'),
+        mode === 'bot'
+          ? t('start.bot_name')
+          : p2.trim() || t('start.player2_placeholder'),
       ],
       mode,
     })
@@ -32,6 +38,14 @@ export function StartScreen({ onStart, locale, onToggleLocale }) {
         aria-label={locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
       >
         {locale === 'es' ? 'EN' : 'ES'}
+      </button>
+
+      <button
+        className={styles.settingsBtn}
+        onClick={() => setShowSettings(true)}
+        aria-label="Settings"
+      >
+        ⚙
       </button>
 
       <main className={styles.main}>
@@ -82,8 +96,8 @@ export function StartScreen({ onStart, locale, onToggleLocale }) {
             />
           </div>
 
-          {mode === 'local' && <LocalP2Field locale={locale} />}
-          {mode === 'bot'   && <BotLabel />}
+          {mode === 'local' && <LocalP2Field p2={p2} onP2Change={setP2} />}
+          {mode === 'bot'   && <BotSection />}
           {mode === 'online' && (
             <OnlinePanel
               p1Name={p1.trim() || t('start.player1_placeholder')}
@@ -102,6 +116,15 @@ export function StartScreen({ onStart, locale, onToggleLocale }) {
       <footer className={styles.footer}>
         <p>{t('disclaimer.text')}</p>
       </footer>
+
+      {showSettings && (
+        <SettingsPanel
+          onClose={() => setShowSettings(false)}
+          sceneManager={null}
+          force2D={force2D}
+          onToggle2D={onToggle2D}
+        />
+      )}
     </div>
   )
 }
@@ -201,9 +224,7 @@ function OnlinePanel({ p1Name, onStart }) {
   )
 }
 
-/** Separate component so the input state survives mode switch back to local */
-function LocalP2Field({ locale }) {
-  const [p2, setP2] = useState('')
+function LocalP2Field({ p2, onP2Change }) {
   return (
     <div className={styles.nameField}>
       <label className={styles.nameLabel} htmlFor="p2name">
@@ -217,18 +238,38 @@ function LocalP2Field({ locale }) {
         maxLength={20}
         placeholder={t('start.player2_placeholder')}
         value={p2}
-        onChange={e => setP2(e.target.value)}
+        onChange={e => onP2Change(e.target.value)}
       />
     </div>
   )
 }
 
-function BotLabel() {
+function BotSection() {
+  const [difficulty, setDifficulty] = useState(settings.botDifficulty ?? 'normal')
+
+  const handleDifficulty = (v) => {
+    setDifficulty(v)
+    updateSetting('botDifficulty', v)
+  }
+
   return (
-    <div className={styles.botLabelWrap}>
-      <span className={styles.playerDot} style={{ background: 'var(--p2-color)' }} />
-      <span className={styles.botLabelText}>{t('start.bot_name')}</span>
-      <span className={styles.botChip}>IA</span>
+    <div className={styles.botSectionWrap}>
+      <div className={styles.botLabelWrap}>
+        <span className={styles.playerDot} style={{ background: 'var(--p2-color)' }} />
+        <span className={styles.botLabelText}>{t('start.bot_name')}</span>
+        <span className={styles.botChip}>IA</span>
+      </div>
+      <div className={styles.difficultyRow}>
+        {['easy', 'normal', 'hard'].map(d => (
+          <button
+            key={d}
+            className={`${styles.diffBtn} ${difficulty === d ? styles.diffBtnActive : ''}`}
+            onClick={() => handleDifficulty(d)}
+          >
+            {t(`difficulty.${d}`)}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

@@ -14,7 +14,7 @@ export function useGameReducer() {
   }, [])
 
   const rollDice = useCallback(() => {
-    const value = Math.ceil(Math.random() * 6)
+    const value = Math.floor(Math.random() * 6) + 1
     dispatch({ type: 'ROLL_DICE', value })
     if (state.mode === 'online') sendMove({ type: 'ROLL', value })
   }, [state.mode])

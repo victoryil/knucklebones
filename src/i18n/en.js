@@ -22,6 +22,9 @@ const en = {
   'start.player1_placeholder': 'Player 1',
   'start.player2_placeholder': 'Player 2',
   'start.bot_name': 'AI Bot',
+  'difficulty.easy': 'Easy',
+  'difficulty.normal': 'Normal',
+  'difficulty.hard': 'Hard',
   'game.bot_thinking': 'Thinking…',
   'game.space_hint': 'Space to roll',
 

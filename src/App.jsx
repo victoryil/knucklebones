@@ -85,6 +85,8 @@ export default function App() {
           onStart={handleStart}
           locale={locale}
           onToggleLocale={handleToggleLocale}
+          force2D={force2D}
+          onToggle2D={handleToggle2D}
         />
       )}
       {currentScreen === SCREENS.GAME && (

@@ -54,7 +54,7 @@ function BoardGrid({ board, playerIndex, columnScores, canPlace, onPlace }) {
                       // key on the inner wrapper triggers popIn CSS animation
                       // each time a new die value appears in this slot.
                       <div className={styles.dieAnim} key={`${ci}-${si}-${val}`}>
-                        <DiceDisplay value={val} size={50} />
+                        <DiceDisplay value={val} size={42} />
                       </div>
                     )}
                   </div>
@@ -100,12 +100,9 @@ export function Board2D({ state, onRoll, onPlace, mode, selectedCol = 0 }) {
         <span className={`${styles.centralScore} ${styles.scoreP0}`}>{scores[0]}</span>
 
         <div className={styles.centralDie}>
-          {/* Show bot-thinking hint during bot's rolling phase */}
           {isBotTurn && phase === PHASES.ROLLING && (
             <span className={styles.botHint}>{t('game.bot_thinking')}</span>
           )}
-
-          {/* Roll button — only when it's human's rolling turn */}
           {canRoll && (
             <button
               className={styles.rollBtn}
@@ -115,20 +112,17 @@ export function Board2D({ state, onRoll, onPlace, mode, selectedCol = 0 }) {
               {t('game.roll')}
             </button>
           )}
-
-          {/* Current die */}
           {currentRoll !== null && (
-            <div className={styles.currentDie}>
-              <DiceDisplay value={currentRoll} size={70} glow />
-            </div>
+            <DiceDisplay value={currentRoll} size={54} glow />
           )}
-
-          <span className={styles.turnLabel}>
-            {t('game.turn_of')} <strong>{playerNames[currentPlayer]}</strong>
-          </span>
         </div>
 
         <span className={`${styles.centralScore} ${styles.scoreOpp}`}>{scores[1]}</span>
+      </div>
+
+      {/* ── Turn strip ─────────────────────────────────────────────────── */}
+      <div className={styles.turnStrip}>
+        {t('game.turn_of')} <strong>{playerNames[currentPlayer]}</strong>
       </div>
 
       {/* ── Player (player 0) — bottom ──────────────────────────────────── */}

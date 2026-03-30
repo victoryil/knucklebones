@@ -24,6 +24,9 @@ const es = {
   'start.player1_placeholder': 'Jugador 1',
   'start.player2_placeholder': 'Jugador 2',
   'start.bot_name': 'Bot IA',
+  'difficulty.easy': 'Fácil',
+  'difficulty.normal': 'Normal',
+  'difficulty.hard': 'Difícil',
   'game.bot_thinking': 'Pensando…',
   'game.space_hint': 'Espacio para tirar',
 

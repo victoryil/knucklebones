@@ -1,8 +1,4 @@
-/* ── Layout ────────────────────────────────────────────────────────────────
-   Vertical stack that fills the available space inside GameScreen.main.
-   On mobile (< 768px) the side PlayerPanels are hidden (see GameScreen.module.css)
-   so Board2D gets all the width.
-*/
+/* ── Layout ────────────────────────────────────────────────────────────────*/
 .layout {
   display: flex;
   flex-direction: column;
@@ -13,16 +9,47 @@
   font-family: 'Cinzel', serif;
 }
 
+/* ── Cell size ─────────────────────────────────────────────────────────────
+   Two boards × 3 rows = 6 rows of cells.
+   • vw  axis: min(17vw, 70px) so 3 columns fit on any phone width.
+   • dvh axis: the dvh variant caps each cell to ~9.5% of the usable
+     viewport height, so 6 rows + all fixed chrome fits without overflow.
+   @supports gates the dvh version so older Safari falls back to vw-only.
+*/
+.cell {
+  width: min(17vw, 70px);
+  height: min(17vw, 70px);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+@supports (height: 1dvh) {
+  .cell {
+    width: min(17vw, 9.5dvh, 70px);
+    height: min(17vw, 9.5dvh, 70px);
+  }
+}
+
+.cellP0 { background: #0a1535; border-color: #1a3a6a44; }
+.cellP1 { background: #350a0a; border-color: #6a1a1a44; }
+
 /* ── Player headers ────────────────────────────────────────────────────────*/
 .playerHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: clamp(3px, 0.7dvh, 6px) 12px;
+  flex-shrink: 0;
 }
 
 .headerName {
-  font-size: 13px;
+  font-size: clamp(11px, 1.8dvh, 13px);
   font-weight: 400;
   letter-spacing: 0.06em;
   color: #e8d5b0;
@@ -33,7 +60,7 @@
 }
 
 .headerScore {
-  font-size: 18px;
+  font-size: clamp(14px, 2.8dvh, 18px);
   font-weight: 700;
   letter-spacing: 0.03em;
 }
@@ -55,30 +82,29 @@
   display: flex;
   flex-direction: column;
   border-bottom: 1px solid #2a2a2a;
-  padding-bottom: 4px;
 }
 
-/* ── Central zone ──────────────────────────────────────────────────────────*/
+/* ── Central zone — horizontal: score | die/btn | score ────────────────────*/
 .central {
   flex-shrink: 0;
-  height: 90px;
+  height: clamp(58px, 10dvh, 82px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 12px;
   border-top: 1px solid #1a1a1a;
   border-bottom: 1px solid #1a1a1a;
   background: rgba(255,255,255,0.02);
-  gap: 8px;
+  gap: 6px;
 }
 
 .centralScore {
   font-family: 'Cinzel', serif;
-  font-size: 28px;
+  font-size: clamp(18px, 4dvh, 28px);
   font-weight: 700;
   letter-spacing: 0.02em;
   flex-shrink: 0;
-  min-width: 48px;
+  min-width: 36px;
   text-align: center;
 }
 
@@ -87,35 +113,9 @@
 
 .centralDie {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-}
-
-.currentDie {
-  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.turnLabel {
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: #5a4a3a;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.turnLabel strong {
-  color: #9a8070;
-}
-
-.botHint {
-  font-size: 11px;
-  font-style: italic;
-  color: #c41e3a;
-  opacity: 0.8;
+  flex: 1;
 }
 
 .rollBtn {
@@ -124,14 +124,14 @@
   border-radius: 4px;
   color: #c8860a;
   font-family: 'Cinzel', serif;
-  font-size: 11px;
+  font-size: clamp(9px, 1.8dvh, 11px);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 8px 18px;
+  padding: 6px 10px;
   cursor: pointer;
   width: 100%;
-  min-height: 44px;
+  min-height: clamp(36px, 6dvh, 44px);
   transition: background 0.15s, border-color 0.15s;
 }
 
@@ -140,53 +140,81 @@
   border-color: #c41e3a;
 }
 
+.botHint {
+  font-size: clamp(9px, 1.7dvh, 11px);
+  font-style: italic;
+  color: #c41e3a;
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* ── Turn strip — compact label between central and player board ─────────*/
+.turnStrip {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: clamp(8px, 1.5dvh, 10px);
+  letter-spacing: 0.1em;
+  color: #3a3a3a;
+  text-transform: uppercase;
+  padding: clamp(1px, 0.4dvh, 3px) 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turnStrip strong { color: #5a4a3a; }
+
 /* ── Player section (bottom) ───────────────────────────────────────────────*/
 .playerSection {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-top: 4px;
+  min-height: 0;
 }
 
-/* ── Board grid (shared by both players) ───────────────────────────────────*/
+/* ── Board grid ────────────────────────────────────────────────────────────*/
 .boardGrid {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: clamp(2px, 0.5dvh, 4px);
+  padding: clamp(2px, 0.5dvh, 4px) 8px;
+  flex-shrink: 0;
 }
 
 .colScoreRow {
   display: flex;
   gap: 4px;
-  width: 100%;
   justify-content: center;
 }
 
 .colScore {
   font-family: 'Cinzel', serif;
-  font-size: 13px;
+  font-size: clamp(10px, 2dvh, 13px);
   font-weight: 700;
   text-align: center;
-  width: min(18vw, 72px);
+  /* match cell width so scores align with columns */
+  width: min(17vw, 70px);
   letter-spacing: 0.02em;
+}
+
+@supports (height: 1dvh) {
+  .colScore { width: min(17vw, 9.5dvh, 70px); }
 }
 
 .colScoreP0 { color: #4a8fff; }
 .colScoreP1 { color: #ff4a6a; }
 
-/* 3 columns × 3 rows of cells */
 .gridCells {
   display: flex;
-  gap: 4px;
+  gap: clamp(3px, 0.6dvh, 4px);
 }
 
 .gridCol {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: clamp(3px, 0.6dvh, 4px);
   border-radius: 6px;
   padding: 2px;
   transition: outline 0.1s;
@@ -195,28 +223,6 @@
 .gridColActive {
   outline: 2px solid rgba(200, 134, 10, 0.5);
   outline-offset: 1px;
-}
-
-.cell {
-  width: min(18vw, 72px);
-  height: min(18vw, 72px);
-  border-radius: 6px;
-  border: 1px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.cellP0 {
-  background: #0a1535;
-  border-color: #1a3a6a44;
-}
-
-.cellP1 {
-  background: #350a0a;
-  border-color: #6a1a1a44;
 }
 
 /* ── Die pop-in animation ──────────────────────────────────────────────────*/
@@ -234,18 +240,19 @@
 .colBtns {
   display: flex;
   gap: 4px;
-  padding: 6px 8px 4px;
+  padding: clamp(3px, 0.6dvh, 6px) 8px;
+  flex-shrink: 0;
 }
 
 .colBtn {
   flex: 1;
-  height: 44px;
+  height: clamp(36px, 6dvh, 44px);
   background: #0d0d0d;
   border: 1px solid #2a2a2a;
   border-radius: 4px;
   color: #3a3a3a;
   font-family: 'Cinzel', serif;
-  font-size: 16px;
+  font-size: clamp(13px, 2.5dvh, 16px);
   font-weight: 700;
   cursor: not-allowed;
   transition: background 0.12s, border-color 0.12s, color 0.12s;
@@ -258,31 +265,14 @@
   cursor: pointer;
 }
 
-.colBtnEnabled:hover {
-  background: #2a1000;
-  border-color: #c41e3a;
-}
+.colBtnEnabled:hover  { background: #2a1000; border-color: #c41e3a; }
+.colBtnEnabled:active { transform: scale(0.97); }
 
-.colBtnEnabled:active {
-  transform: scale(0.97);
-}
-
-.colBtnFull {
-  opacity: 0.25;
-  cursor: not-allowed;
-}
+.colBtnFull     { opacity: 0.25; cursor: not-allowed; }
 
 .colBtnSelected {
   background: #2a1000;
   border-color: #c8860a;
   color: #c8860a;
   box-shadow: 0 0 8px rgba(200, 134, 10, 0.35);
-}
-
-/* ── Mobile adjustments (< 480px narrow phones) ────────────────────────────*/
-@media (max-width: 480px) {
-  .central { height: 80px; padding: 0 10px; }
-  .centralScore { font-size: 22px; min-width: 36px; }
-  .rollBtn { font-size: 10px; padding: 6px 10px; }
-  .playerHeader { padding: 4px 8px; }
 }
