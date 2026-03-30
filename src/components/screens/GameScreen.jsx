@@ -151,6 +151,9 @@ export function GameScreen({
       audioEngine.playDestroy()
       audioEngine.onDiceDestroyed()
       sceneRef.current?.triggerShake(0.05, 200)
+      for (const { player: p, col: c } of lastDestroyed) {
+        sceneRef.current?.triggerFloatingText(p, c, 'DESTRUIDO', '#ff4455')
+      }
     }
     prevDestroyedRef.current = lastDestroyed
   }, [lastDestroyed, sceneRef])
@@ -180,7 +183,12 @@ export function GameScreen({
           const counts = {}; for (const v of col) { if (v !== null) counts[v] = (counts[v] || 0) + 1 }
           const prevCounts = {}; for (const v of prev) { if (v !== null) prevCounts[v] = (prevCounts[v] || 0) + 1 }
           for (const [val, cnt] of Object.entries(counts)) {
-            if (cnt >= 2 && (prevCounts[val] ?? 0) < cnt) audioEngine.onComboCreated(cnt)
+            if (cnt >= 2 && (prevCounts[val] ?? 0) < cnt) {
+              audioEngine.onComboCreated(cnt)
+              // Score gain: val*cnt² − val*(cnt−1)²
+              const gain = Number(val) * (cnt * cnt - (cnt - 1) * (cnt - 1))
+              sceneRef.current?.triggerFloatingText(p, c, `+${gain} pts`, '#e8b840')
+            }
           }
         }
       }

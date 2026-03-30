@@ -67,6 +67,28 @@ function applyMultiplierColor(mesh, count) {
   mesh.material[2].color.set(count >= 2 ? col : new THREE.Color(0xffffff))
 }
 
+// ── Floating text sprites ─────────────────────────────────────────────────────
+function makeTextSprite(text, color = '#ffffff') {
+  const canvas  = document.createElement('canvas')
+  canvas.width  = 320
+  canvas.height = 72
+  const ctx = canvas.getContext('2d')
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.font         = 'bold 38px Cinzel, Georgia, serif'
+  ctx.textAlign    = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.shadowColor  = 'rgba(0,0,0,0.95)'
+  ctx.shadowBlur   = 14
+  ctx.fillStyle    = color
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2)
+  const texture = new THREE.CanvasTexture(canvas)
+  const mat     = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false })
+  const sprite  = new THREE.Sprite(mat)
+  // Scale to keep roughly a 4.4:1 aspect ratio in world units
+  sprite.scale.set(3.2, 0.72, 1)
+  return sprite
+}
+
 // ── Particles ─────────────────────────────────────────────────────────────────
 const PARTICLE_COLORS = [0xc9a84c, 0xffd060, 0xff8844, 0xffffff]
 
@@ -92,8 +114,9 @@ export class SceneManager {
   constructor(canvas) {
     this._canvas     = canvas
     this._diceMap    = new Map()
-    this._particles  = []
-    this._rafId      = null
+    this._particles    = []
+    this._floatingTexts = []
+    this._rafId        = null
     this._ready      = false
     this._fastAnimations = false
     this._particleCount  = 10
@@ -381,6 +404,24 @@ export class SceneManager {
 
   setBloomEnabled(_enabled) { /* no-op: postprocessing removed */ }
 
+  // ── Floating text API ─────────────────────────────────────────────────────
+  /**
+   * Spawns a floating text sprite above the centre of a column.
+   * @param {number} player  0 or 1
+   * @param {number} col     0–2
+   * @param {string} text    e.g. "+18 pts" or "DESTRUIDO"
+   * @param {string} color   CSS colour string, e.g. '#e8b840'
+   */
+  triggerFloatingText(player, col, text, color) {
+    if (!this._ready) return
+    const x      = (col - 1) * COL_SPACING
+    const z      = COL_Z_CENTER * (player === 0 ? 1 : -1)
+    const sprite = makeTextSprite(text, color)
+    sprite.position.set(x, 2.0, z)
+    this._scene.add(sprite)
+    this._floatingTexts.push({ sprite, life: 1.0, vy: 1.8 })
+  }
+
   setQuality(quality) {
     this._renderer.shadowMap.enabled = quality !== 'low'
     this._renderer.shadowMap.needsUpdate = true
@@ -492,6 +533,23 @@ export class SceneManager {
       mesh.rotation.z = THREE.MathUtils.lerp(mesh.rotation.z, rest.z, 1 - Math.exp(-ROT_K * dt))
     }
 
+    // Floating texts — float up and fade out over ~1.4 s
+    const deadTexts = []
+    for (const ft of this._floatingTexts) {
+      ft.life -= dt * 0.72             // total lifetime ~1.4 s
+      ft.vy    = Math.max(0.4, ft.vy - dt * 2.2)   // decelerate upward
+      ft.sprite.position.y += ft.vy * dt
+      // Hold full opacity for 60 % of life, then fade
+      ft.sprite.material.opacity = Math.max(0, ft.life < 0.4 ? ft.life / 0.4 : 1.0)
+      if (ft.life <= 0) {
+        this._scene.remove(ft.sprite)
+        ft.sprite.material.map?.dispose()
+        ft.sprite.material.dispose()
+        deadTexts.push(ft)
+      }
+    }
+    if (deadTexts.length) this._floatingTexts = this._floatingTexts.filter(f => !deadTexts.includes(f))
+
     // Particles
     const dead = []
     for (const p of this._particles) {
@@ -538,6 +596,12 @@ export class SceneManager {
     c.style.cursor = ''
     this._diceMap.clear()
     this._particles = []
+    for (const ft of this._floatingTexts) {
+      this._scene.remove(ft.sprite)
+      ft.sprite.material.map?.dispose()
+      ft.sprite.material.dispose()
+    }
+    this._floatingTexts = []
     this._ready = false
   }
 }
