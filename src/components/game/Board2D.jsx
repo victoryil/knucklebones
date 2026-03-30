@@ -80,11 +80,13 @@ function BoardGrid({ board, playerIndex, columnScores, canPlace, onPlace, danger
 }
 
 // ── Board2D ────────────────────────────────────────────────────────────────
-export function Board2D({ state, onRoll, onPlace, mode, selectedCol = 0 }) {
+export function Board2D({ state, onRoll, onPlace, mode, playerIndex = 0, selectedCol = 0 }) {
   const { boards, scores, columnScores, phase, currentRoll, playerNames, currentPlayer } = state
 
   const isBotTurn    = mode === 'bot' && currentPlayer === 1
-  const isHumanTurn  = mode === 'bot' ? currentPlayer === 0 : true
+  const isHumanTurn  = mode === 'bot'
+    ? currentPlayer === 0
+    : (mode !== 'online' || currentPlayer === playerIndex)
   const canRoll      = isHumanTurn && phase === PHASES.ROLLING
   const canPlace     = isHumanTurn && phase === PHASES.PLACING
 

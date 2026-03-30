@@ -214,6 +214,7 @@ export function GameScreen({
               onRoll={guardedOnRoll}
               onPlace={guardedOnPlace}
               mode={mode}
+              playerIndex={playerIndex}
               selectedCol={selectedCol}
             />
             <div className={styles.controls}>

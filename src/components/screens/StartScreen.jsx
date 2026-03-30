@@ -174,7 +174,8 @@ function OnlinePanel({ p1Name, onStart, initialJoinCode = '' }) {
     if (!roomCode.trim()) return
     setStatus('connecting')
     await join(roomCode.trim(), () => {
-      onStart({ playerNames: [p1Name, t('start.online_opponent')], mode: 'online', playerIndex: 1 })
+      // Guest is player 1 in the reducer, so names must match: [player0=host, player1=us]
+      onStart({ playerNames: [t('start.online_opponent'), p1Name], mode: 'online', playerIndex: 1 })
     })
   }
 
