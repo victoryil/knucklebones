@@ -14,7 +14,7 @@ KNUCKLEBONES — ROADMAP DE MEJORAS
     vite-plugin-pwa: manifest + service worker. Funciona offline. Se instala desde el browser como app nativa.
     HECHO — vite-plugin-pwa v1.2.0: manifest.webmanifest + sw.js (Workbox generateSW). Precachea JS/CSS/HTML/SVG.
     Fonts de Google en CacheFirst (1 año). Meta tags PWA en index.html (theme-color, apple-mobile-web-app).
-[ ] Texto flotante 3D en combos y destrucciones
+[x] Texto flotante 3D en combos y destrucciones
     THREE.Sprite con CanvasTexture: "+18 pts" dorado / "DESTRUIDO" rojo. Sube y desvanece sobre el tablero.
     ~2h · añadir en SceneManager
 [x] Contador de victorias por sesión
@@ -43,12 +43,13 @@ KNUCKLEBONES — ROADMAP DE MEJORAS
 [ ] Estadísticas post-partida ampliadas
     Dado más tirado, destrucciones hechas/recibidas, mejor combo, gráfico de evolución de puntuación por turno.
     ~1 día · datos ya disponibles en gameReducer
-[ ] Emotes en modo online
+[x] Emotes en modo online
     Canal PeerJS ya existe. 4-6 emotes predefinidos: ¡Buena jugada! / ¡Maldición! / ¡Revancha! Overlay discreto, sin chat libre.
     ~1 día · canal WebRTC ya disponible
-[ ] Reconexión automática en modo online
+[x] Reconexión automática en modo online
     Si cae WebRTC, mostrar "Reconectando..." y reintentar. Guardar game state para restaurar la partida al reconectar.
-    ~2 días · PeerJS tiene eventos para esto
+    HECHO — networkInterface: startReconnect (5 intentos × 3s), host reclama mismo peer ID, guest redisca.
+    STATE_SYNC_REQUEST / STATE_SYNC sincronizan el tablero completo. ReconnectOverlay con spinner y botón abandonar.
 
 ## NICE TO HAVE — POLISH VISUAL
 [ ] Skins de tablero y dados (3-4 temas)

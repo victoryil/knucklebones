@@ -57,6 +57,12 @@ const en = {
   'pause.surrender': '⚑ Surrender',
   'pause.menu': '← Main Menu',
 
+  // Reconnect
+  'reconnect.title':   'Connection lost',
+  'reconnect.trying':  'Reconnecting…',
+  'reconnect.attempt': 'Attempt {n} of {max}',
+  'reconnect.abandon': 'Abandon game',
+
   // Emotes
   'emote.open':      'Send emote',
   'emote.cooldown':  'Wait a moment…',

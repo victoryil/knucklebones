@@ -133,6 +133,10 @@ export function gameReducer(state, action) {
       return getInitialState(action.playerNames, action.mode ?? 'local')
     }
 
+    case 'RESTORE_STATE': {
+      return { ...action.state }
+    }
+
     case 'SET_PLAYER_NAMES': {
       return { ...state, playerNames: action.names }
     }

@@ -61,6 +61,12 @@ const es = {
   'pause.surrender': '⚑ Rendirse',
   'pause.menu': '← Menú Principal',
 
+  // Reconnect
+  'reconnect.title':   'Conexión perdida',
+  'reconnect.trying':  'Reconectando…',
+  'reconnect.attempt': 'Intento {n} de {max}',
+  'reconnect.abandon': 'Abandonar partida',
+
   // Emotes
   'emote.open':      'Enviar emote',
   'emote.cooldown':  'Espera un momento…',

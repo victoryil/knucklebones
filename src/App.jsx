@@ -3,9 +3,10 @@ import { StartScreen } from '@/components/screens/StartScreen.jsx'
 import { GameScreen } from '@/components/screens/GameScreen.jsx'
 import { GameOverScreen } from '@/components/screens/GameOverScreen.jsx'
 import { TutorialScreen } from '@/components/screens/TutorialScreen.jsx'
+import { ReconnectOverlay } from '@/components/screens/ReconnectOverlay.jsx'
 import { useGameReducer } from '@/hooks/useGameReducer.js'
 import { audioEngine } from '@/audio/audioEngine.js'
-import { disconnect } from '@/network/networkInterface.js'
+import { disconnect, cancelReconnect, startReconnect, sendMove } from '@/network/networkInterface.js'
 import { PHASES } from '@/game/constants.js'
 import { setLocale as i18nSetLocale, getCurrentLocale } from '@/i18n/index.js'
 import styles from './App.module.css'
@@ -18,9 +19,6 @@ export default function App() {
   const [playerIndex, setPlayerIndex] = useState(0)
 
   // ── 2D mode ──────────────────────────────────────────────────────────────
-  // force2D: user preference stored in localStorage
-  // autoIs2D: triggered automatically when viewport < 768px
-  // is2D: either condition → switch to 2D
   const [force2D, setForce2D] = useState(
     () => localStorage.getItem('knucklebones-force2d') === 'true',
   )
@@ -40,6 +38,11 @@ export default function App() {
   }, [])
 
   const { state, startGame, rollDice, placeDice, animationDone, resetGame, networkError, clearNetworkError } = useGameReducer()
+
+  // ── Reconnect state ───────────────────────────────────────────────────────
+  const [reconnecting, setReconnecting]   = useState(false)
+  const [reconnAttempt, setReconnAttempt] = useState(0)
+  const RECONN_MAX = 5
 
   // Initialize AudioEngine on first user interaction (browser autoplay policy)
   useEffect(() => {
@@ -81,20 +84,46 @@ export default function App() {
   }, [startGame])
 
   const handleMenu = useCallback(() => {
+    cancelReconnect()
     disconnect()
+    setReconnecting(false)
     setScreen(SCREENS.START)
   }, [])
 
   const handleRematch = useCallback(() => { resetGame(); setScreen(SCREENS.GAME) }, [resetGame])
 
-  // Network disconnect: go back to menu
+  // ── Network disconnect → try to reconnect, then fall back to menu ─────────
   useEffect(() => {
-    if (networkError) {
-      clearNetworkError()
+    if (!networkError) return
+    clearNetworkError()
+
+    // Only attempt reconnect when a game is in progress
+    if (screen !== SCREENS.GAME || state.mode !== 'online') {
       resetGame()
       setScreen(SCREENS.START)
+      return
     }
-  }, [networkError, clearNetworkError, resetGame])
+
+    setReconnecting(true)
+    setReconnAttempt(0)
+
+    startReconnect(
+      // onSuccess — connection restored
+      () => {
+        setReconnecting(false)
+        setReconnAttempt(0)
+        // Guest requests a full state sync from the host
+        if (playerIndex === 1) sendMove({ type: 'STATE_SYNC_REQUEST' })
+        // Host: waits; responds via handleSyncRequest in useGameReducer
+      },
+      // onAttempt — update counter
+      (n) => setReconnAttempt(n),
+      // onFail — give up, go to menu
+      () => { setReconnecting(false); resetGame(); setScreen(SCREENS.START) },
+      RECONN_MAX,
+    )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [networkError])
 
   const currentScreen = state.phase === PHASES.GAMEOVER && screen === SCREENS.GAME
     ? SCREENS.GAMEOVER : screen
@@ -139,6 +168,14 @@ export default function App() {
           onRematch={handleRematch}
           onMenu={handleMenu}
           playerIndex={playerIndex}
+        />
+      )}
+
+      {reconnecting && (
+        <ReconnectOverlay
+          attempt={reconnAttempt}
+          maxAttempts={RECONN_MAX}
+          onAbandon={handleMenu}
         />
       )}
     </div>
