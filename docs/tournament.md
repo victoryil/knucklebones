@@ -1,0 +1,3 @@
+# Modo Torneo
+
+Implementación pendiente.

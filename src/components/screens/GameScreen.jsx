@@ -7,7 +7,7 @@ import { useThreeScene } from '@/hooks/useThreeScene.js'
 import { useBotPlayer } from '@/hooks/useBotPlayer.js'
 import { useGamepad } from '@/hooks/useGamepad.js'
 import { PHASES, isColumnFull } from '@/game/constants.js'
-import { audioEngine } from '@/audio/AudioEngine.js'
+import { audioEngine } from '@/audio/audioEngine.js'
 import { t } from '@/i18n/index.js'
 import styles from './GameScreen.module.css'
 

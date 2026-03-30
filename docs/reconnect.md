@@ -1,0 +1,3 @@
+# Reconexión automática
+
+Implementación pendiente.

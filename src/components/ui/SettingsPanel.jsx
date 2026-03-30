@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { audioEngine } from '@/audio/AudioEngine.js'
+import { audioEngine } from '@/audio/audioEngine.js'
 import { settings, updateSetting } from '@/settings/store.js'
 import styles from './SettingsPanel.module.css'
 
