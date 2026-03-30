@@ -179,13 +179,24 @@ export function GameScreen({
       <div className={styles.main}>
         {is2D ? (
           // ── 2D MODE ──────────────────────────────────────────────────────
-          <Board2D
-            state={state}
-            onRoll={guardedOnRoll}
-            onPlace={guardedOnPlace}
-            mode={mode}
-            selectedCol={selectedCol}
-          />
+          <div className={styles.board2DWrap}>
+            <Board2D
+              state={state}
+              onRoll={guardedOnRoll}
+              onPlace={guardedOnPlace}
+              mode={mode}
+              selectedCol={selectedCol}
+            />
+            <div className={styles.controls}>
+              <InfoButton onClick={() => setShowInfo(true)} />
+              <button
+                className={styles.settingsBtn}
+                onClick={() => setShowSettings(s => !s)}
+                aria-label="Settings"
+              >⚙</button>
+              <button className={styles.menuBtn} onClick={onMenu}>Menú</button>
+            </div>
+          </div>
         ) : (
           // ── 3D MODE ──────────────────────────────────────────────────────
           <>

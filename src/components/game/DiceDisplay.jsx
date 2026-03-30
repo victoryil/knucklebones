@@ -23,18 +23,40 @@ function SkullIcon({ size = 14 }) {
   )
 }
 
+// Combo tinting — mirrors the 3D SceneManager multiplier colours.
+// combo 2 → gold (#e8b840), combo 3 → blue (#6699ff), else parchment (default)
+const COMBO_STYLE = {
+  2: {
+    background: 'linear-gradient(145deg, #f5c842 0%, #c89010 100%)',
+    borderColor: '#e8b840',
+    skullColor: '#2a1000',
+  },
+  3: {
+    background: 'linear-gradient(145deg, #7aabff 0%, #3366dd 100%)',
+    borderColor: '#6699ff',
+    skullColor: '#00103a',
+  },
+}
+
 /**
  * CSS-rendered 2D dice face showing skull icons in standard dot positions.
  * Used in the HUD, column selector, and score panels.
+ *
+ * @param {number} combo  1 | 2 | 3 — number of matching dice in the column
  */
-export function DiceDisplay({ value, size = 72, glow = false, className = '' }) {
+export function DiceDisplay({ value, size = 72, glow = false, combo = 1, className = '' }) {
   const positions = SKULL_POSITIONS[value] ?? []
   const iconSize = size <= 48 ? 10 : size <= 64 ? 13 : 16
+  const cs = COMBO_STYLE[combo]
 
   return (
     <div
       className={`${styles.dice} ${glow ? styles.glow : ''} ${className}`}
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        ...(cs ? { background: cs.background, borderColor: cs.borderColor } : {}),
+      }}
       aria-label={`Dado: ${value}`}
     >
       {positions.map(([px, py], i) => (
@@ -45,6 +67,7 @@ export function DiceDisplay({ value, size = 72, glow = false, className = '' }) 
             left: `${px}%`,
             top: `${py}%`,
             transform: 'translate(-50%, -50%)',
+            ...(cs ? { color: cs.skullColor } : {}),
           }}
         >
           <SkullIcon size={iconSize} />

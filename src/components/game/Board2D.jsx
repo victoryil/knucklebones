@@ -45,6 +45,8 @@ function BoardGrid({ board, playerIndex, columnScores, canPlace, onPlace }) {
             >
               {order.map((si) => {
                 const val = col[si]
+                // Count matching dice in this column for combo tinting
+                const combo = val !== null ? col.filter(v => v === val).length : 1
                 return (
                   <div
                     key={si}
@@ -54,7 +56,7 @@ function BoardGrid({ board, playerIndex, columnScores, canPlace, onPlace }) {
                       // key on the inner wrapper triggers popIn CSS animation
                       // each time a new die value appears in this slot.
                       <div className={styles.dieAnim} key={`${ci}-${si}-${val}`}>
-                        <DiceDisplay value={val} size={42} />
+                        <DiceDisplay value={val} size={42} combo={combo} />
                       </div>
                     )}
                   </div>

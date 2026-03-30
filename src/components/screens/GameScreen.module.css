@@ -107,6 +107,15 @@
   cursor: not-allowed;
 }
 
+/* 2D mode wrapper — fills .main, gives controls an anchor */
+.board2DWrap {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+}
+
 /* Top-right controls inside the canvas wrap */
 .controls {
   position: absolute;
