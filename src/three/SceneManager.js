@@ -176,16 +176,6 @@ export class SceneManager {
     canvas.addEventListener('pointerdown', this._handleDown)
     canvas.addEventListener('pointerleave', this._handleLeave)
 
-    // ── Dev stats panel ───────────────────────────────────────────────────────
-    if (import.meta.env.DEV) {
-      import('stats.js').then(({ default: Stats }) => {
-        this._stats = new Stats()
-        this._stats.showPanel(0)
-        this._stats.dom.style.cssText = 'position:fixed;top:0;left:0;z-index:9999'
-        document.body.appendChild(this._stats.dom)
-      })
-    }
-
     this._ready = true
     this._startLoop()
   }
@@ -482,14 +472,11 @@ export class SceneManager {
     let prev = performance.now()
     const loop = (now) => {
       this._rafId = requestAnimationFrame(loop)
-      this._stats?.begin()
 
       const dt = Math.min((now - prev) / 1000, 0.05)
       prev = now
       this._tick(dt, now)
       this._renderer.render(this._scene, this._camera)
-
-      this._stats?.end()
     }
     this._rafId = requestAnimationFrame(loop)
   }
@@ -544,7 +531,6 @@ export class SceneManager {
   dispose() {
     if (this._rafId) cancelAnimationFrame(this._rafId)
     if (this._renderer) this._renderer.dispose()
-    if (this._stats?.dom?.parentNode) this._stats.dom.parentNode.removeChild(this._stats.dom)
     const c = this._canvas
     c.removeEventListener('pointermove', this._handleMove)
     c.removeEventListener('pointerdown', this._handleDown)

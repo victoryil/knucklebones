@@ -16,6 +16,28 @@ export default function App() {
   const [locale, setLocale] = useState(getCurrentLocale)
   const [playerIndex, setPlayerIndex] = useState(0)
 
+  // ── 2D mode ──────────────────────────────────────────────────────────────
+  // force2D: user preference stored in localStorage
+  // autoIs2D: triggered automatically when viewport < 768px
+  // is2D: either condition → switch to 2D
+  const [force2D, setForce2D] = useState(
+    () => localStorage.getItem('knucklebones-force2d') === 'true',
+  )
+  const [autoIs2D, setAutoIs2D] = useState(() => window.innerWidth < 768)
+
+  useEffect(() => {
+    const check = () => setAutoIs2D(window.innerWidth < 768)
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  const is2D = autoIs2D || force2D
+
+  const handleToggle2D = useCallback((value) => {
+    setForce2D(value)
+    localStorage.setItem('knucklebones-force2d', value)
+  }, [])
+
   const { state, startGame, rollDice, placeDice, animationDone, resetGame, networkError, clearNetworkError } = useGameReducer()
 
   // Initialize AudioEngine on first user interaction (browser autoplay policy)
@@ -66,13 +88,19 @@ export default function App() {
         />
       )}
       {currentScreen === SCREENS.GAME && (
+        // key={is2D} forces a clean remount when switching modes,
+        // which disposes the WebGL context and SceneManager correctly.
         <GameScreen
+          key={is2D ? '2d' : '3d'}
           state={state}
           onRoll={rollDice}
           onPlace={placeDice}
           onAnimationDone={animationDone}
           onMenu={handleMenu}
           playerIndex={playerIndex}
+          is2D={is2D}
+          force2D={force2D}
+          onToggle2D={handleToggle2D}
         />
       )}
       {currentScreen === SCREENS.GAMEOVER && (

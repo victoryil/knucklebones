@@ -70,6 +70,43 @@
   letter-spacing: 0.03em;
 }
 
+/* Gamepad / keyboard column selector — shown in placing phase */
+.colIndicator {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.colIndBtn {
+  width: 44px;
+  height: 44px;
+  background: rgba(10, 5, 0, 0.82);
+  border: 2px solid #3a3a3a;
+  border-radius: 6px;
+  color: #5a4a3a;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+
+.colIndActive {
+  background: rgba(26, 10, 0, 0.92);
+  border-color: #c8860a;
+  color: #c8860a;
+  box-shadow: 0 0 10px rgba(200, 134, 10, 0.35);
+}
+
+.colIndFull {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
 /* Top-right controls inside the canvas wrap */
 .controls {
   position: absolute;
@@ -109,8 +146,17 @@
 }
 .menuBtn:hover { color: #e8d5b0; border-color: #e8d5b0; }
 
-/* ── Mobile (portrait) ─────────────────────────────────────────── */
+/* ── Mobile (portrait) — 3D mode ──────────────────────────────── */
 @media (max-width: 600px) {
   .main { flex-direction: column; }
   .canvasWrap { flex: 1; min-height: 0; order: -1; }
+}
+
+/* ── Mobile — 2D mode: Board2D fills everything, hide side panels ─
+   Board2D contains its own player info, so the PlayerPanels are
+   redundant at narrow widths. They are not rendered in 2D mode
+   (GameScreen renders Board2D instead), so this rule covers any
+   edge case where both might coexist during a hot-reload.        */
+@media (max-width: 767px) {
+  .main > aside { display: none; }
 }

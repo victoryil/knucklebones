@@ -152,6 +152,20 @@
   color: var(--accent-gold-bright);
 }
 
+/* Row block (row + optional hint) */
+.rowBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rowHint {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  padding-left: 0;
+  font-style: italic;
+}
+
 /* Select */
 .select {
   background: rgba(255,255,255,0.04);

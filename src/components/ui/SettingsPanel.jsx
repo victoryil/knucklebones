@@ -9,7 +9,7 @@ import styles from './SettingsPanel.module.css'
  * @param {Function}    props.onClose
  * @param {SceneManager|null} props.sceneManager  — null when not in GameScreen
  */
-export function SettingsPanel({ onClose, sceneManager = null }) {
+export function SettingsPanel({ onClose, sceneManager = null, force2D = false, onToggle2D = null }) {
   // Local state mirrors settings store so controls re-render on change
   const [masterVolume,    setMasterVolume]    = useState(settings.masterVolume)
   const [musicVolume,     setMusicVolume]     = useState(settings.musicVolume)
@@ -22,6 +22,7 @@ export function SettingsPanel({ onClose, sceneManager = null }) {
   const [quality,         setQuality]         = useState(settings.quality)
   const [fastAnim,        setFastAnim]        = useState(settings.fastAnimations)
   const [botDifficulty,   setBotDifficulty]   = useState(settings.botDifficulty)
+  const [mode2D,          setMode2D]          = useState(force2D)
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const handleMasterVolume = (v) => {
@@ -76,6 +77,10 @@ export function SettingsPanel({ onClose, sceneManager = null }) {
     setBotDifficulty(v)
     updateSetting('botDifficulty', v)
   }
+  const handleMode2D = (v) => {
+    setMode2D(v)
+    onToggle2D?.(v)
+  }
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -111,6 +116,7 @@ export function SettingsPanel({ onClose, sceneManager = null }) {
 
           {/* ── Graphics ──────────────────────────────────────────── */}
           <Section label="Graphics">
+            <ToggleRow label="Modo 2D (sin 3D)" value={mode2D} onChange={handleMode2D} hint="Mejor rendimiento en dispositivos lentos" />
             <ToggleRow label="Bloom"       value={bloomEnabled} onChange={handleBloom}    />
             <ToggleRow label="Screen shake" value={shakeEnabled} onChange={handleShake}   />
             <ToggleRow label="Particles"    value={particles}    onChange={handleParticles} />
@@ -174,17 +180,20 @@ function SliderRow({ label, value, onChange, disabled = false }) {
   )
 }
 
-function ToggleRow({ label, value, onChange }) {
+function ToggleRow({ label, value, onChange, hint }) {
   return (
-    <div className={styles.row}>
-      <span className={styles.rowLabel}>{label}</span>
-      <button
-        className={`${styles.toggle} ${value ? styles.toggleOn : ''}`}
-        onClick={() => onChange(!value)}
-        aria-pressed={value}
-      >
-        {value ? 'On' : 'Off'}
-      </button>
+    <div className={styles.rowBlock}>
+      <div className={styles.row}>
+        <span className={styles.rowLabel}>{label}</span>
+        <button
+          className={`${styles.toggle} ${value ? styles.toggleOn : ''}`}
+          onClick={() => onChange(!value)}
+          aria-pressed={value}
+        >
+          {value ? 'On' : 'Off'}
+        </button>
+      </div>
+      {hint && <p className={styles.rowHint}>{hint}</p>}
     </div>
   )
 }
