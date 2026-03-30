@@ -402,6 +402,36 @@
   flex: 1;
 }
 
+.copyLinkBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 14px;
+  background: rgba(201, 168, 76, 0.1);
+  border: 1.5px solid var(--accent-gold);
+  border-radius: 4px;
+  color: var(--accent-gold-bright);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.copyLinkBtn:hover {
+  background: rgba(201, 168, 76, 0.2);
+}
+
+.copyLinkBtnDone {
+  background: rgba(80, 200, 120, 0.15);
+  border-color: #50c878;
+  color: #50c878;
+}
+
 .onlineBack {
   background: transparent;
   border: none;

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button.jsx'
 import { SettingsPanel } from '@/components/ui/SettingsPanel.jsx'
 import { host, join } from '@/network/networkInterface.js'
@@ -7,10 +7,22 @@ import { t } from '@/i18n/index.js'
 import styles from './StartScreen.module.css'
 
 export function StartScreen({ onStart, locale, onToggleLocale, force2D, onToggle2D }) {
+  // Read ?room= once, before any state initialisation
+  const [initialJoinCode] = useState(
+    () => new URLSearchParams(window.location.search).get('room') ?? ''
+  )
+
   const [p1, setP1]       = useState('')
   const [p2, setP2]       = useState('')
-  const [mode, setMode]   = useState('local')   // 'local' | 'bot' | 'online'
+  const [mode, setMode]   = useState(initialJoinCode ? 'online' : 'local')
   const [showSettings, setShowSettings] = useState(false)
+
+  // Clean the URL so refresh doesn't re-trigger the join flow
+  useEffect(() => {
+    if (initialJoinCode) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = () => {
     onStart({
@@ -102,6 +114,7 @@ export function StartScreen({ onStart, locale, onToggleLocale, force2D, onToggle
             <OnlinePanel
               p1Name={p1.trim() || t('start.player1_placeholder')}
               onStart={onStart}
+              initialJoinCode={initialJoinCode}
             />
           )}
         </div>
@@ -130,16 +143,17 @@ export function StartScreen({ onStart, locale, onToggleLocale, force2D, onToggle
 }
 
 /** Host / Join flow for online mode */
-function OnlinePanel({ p1Name, onStart }) {
-  const [subMode, setSubMode] = useState(null)    // null | 'host' | 'join'
-  const [roomCode, setRoomCode] = useState('')     // generated code (host) or typed code (join)
-  const [status, setStatus] = useState('idle')    // 'idle' | 'pending' | 'waiting' | 'connecting'
+function OnlinePanel({ p1Name, onStart, initialJoinCode = '' }) {
+  // If a ?room= link was opened, start directly in join mode
+  const [subMode, setSubMode] = useState(initialJoinCode ? 'join' : null)
+  const [roomCode, setRoomCode] = useState(initialJoinCode)
+  const [status, setStatus]    = useState('idle')
+  const [copied, setCopied]    = useState(false)
 
   const handleHost = async () => {
     setSubMode('host')
     setStatus('pending')
     const code = await host(() => {
-      // opponent connected → start game as player 0
       onStart({ playerNames: [p1Name, t('start.online_opponent')], mode: 'online', playerIndex: 0 })
     })
     setRoomCode(code)
@@ -156,8 +170,15 @@ function OnlinePanel({ p1Name, onStart }) {
     if (!roomCode.trim()) return
     setStatus('connecting')
     await join(roomCode.trim(), () => {
-      // connected → start game as player 1
       onStart({ playerNames: [p1Name, t('start.online_opponent')], mode: 'online', playerIndex: 1 })
+    })
+  }
+
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}${window.location.pathname}?room=${roomCode}`
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     })
   }
 
@@ -185,6 +206,12 @@ function OnlinePanel({ p1Name, onStart }) {
         <div className={styles.onlineCodeBox}>
           <span className={styles.onlineCodeLabel}>{t('start.room_code')}</span>
           <strong className={styles.onlineCode}>{roomCode}</strong>
+          <button
+            className={`${styles.copyLinkBtn} ${copied ? styles.copyLinkBtnDone : ''}`}
+            onClick={handleCopyLink}
+          >
+            {copied ? t('start.link_copied') : t('start.copy_link')}
+          </button>
           <p className={styles.onlineStatus}>{t('start.waiting_opponent')}</p>
         </div>
       )}
@@ -217,7 +244,7 @@ function OnlinePanel({ p1Name, onStart }) {
           className={styles.onlineBack}
           onClick={() => { setSubMode(null); setStatus('idle'); setRoomCode('') }}
         >
-          ← Back
+          ← {t('start.back')}
         </button>
       )}
     </div>
