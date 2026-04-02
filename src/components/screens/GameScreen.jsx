@@ -82,6 +82,7 @@ export function GameScreen({
     canvasRef, boards,
     { phase: scenePhase, currentPlayer, onPlace: guardedOnPlace },
     lastDestroyed,
+    playerIndex,
   )
 
   useBotPlayer(state, onRoll, onPlace, isPaused)   // bot always uses raw handlers

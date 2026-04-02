@@ -163,6 +163,7 @@ export class SceneManager {
     this._camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 100)
     this._camera.position.copy(this._camBasePos)
     this._camera.lookAt(0, 0, 0)
+    this._camLookAt = new THREE.Vector3(0, 0, 0)
 
     // ── Lighting ──────────────────────────────────────────────────────────────
     this._scene.add(new THREE.AmbientLight(0xffe8d0, 1.2))
@@ -575,6 +576,21 @@ export class SceneManager {
         }
       }
     }
+  }
+
+  // ── Player perspective ────────────────────────────────────────────────────
+  // Flip the camera to the opposite side so guest (playerIndex=1) sees their
+  // own board in the foreground, matching the local player experience.
+  setCameraForPlayer(playerIndex) {
+    if (playerIndex === 1) {
+      this._camBasePos.set(0, 14, -6)
+      this._camLookAt.set(0, 0, 0)
+    } else {
+      this._camBasePos.set(0, 14, 6)
+      this._camLookAt.set(0, 0, 0)
+    }
+    this._camera.position.copy(this._camBasePos)
+    this._camera.lookAt(this._camLookAt)
   }
 
   // ── Resize ────────────────────────────────────────────────────────────────

@@ -134,7 +134,9 @@ export function gameReducer(state, action) {
     }
 
     case 'RESTORE_STATE': {
-      return { ...action.state }
+      // Keep local playerNames — the host's STATE_SYNC carries its own name map
+      // which would overwrite the guest's real name with 'Rival Online'.
+      return { ...action.state, playerNames: state.playerNames }
     }
 
     case 'SET_PLAYER_NAMES': {
