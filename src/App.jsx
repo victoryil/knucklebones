@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { StartScreen } from '@/components/screens/StartScreen.jsx'
 import { GameScreen } from '@/components/screens/GameScreen.jsx'
 import { GameOverScreen } from '@/components/screens/GameOverScreen.jsx'
@@ -38,6 +38,10 @@ export default function App() {
   }, [])
 
   const { state, startGame, rollDice, placeDice, animationDone, resetGame, networkError, clearNetworkError } = useGameReducer()
+
+  // Always-current state ref so reconnect callbacks avoid stale closures
+  const stateRef = useRef(state)
+  useEffect(() => { stateRef.current = state }, [state])
 
   // ── Reconnect state ───────────────────────────────────────────────────────
   const [reconnecting, setReconnecting]   = useState(false)
@@ -112,9 +116,14 @@ export default function App() {
       () => {
         setReconnecting(false)
         setReconnAttempt(0)
-        // Guest requests a full state sync from the host
-        if (playerIndex === 1) sendMove({ type: 'STATE_SYNC_REQUEST' })
-        // Host: waits; responds via handleSyncRequest in useGameReducer
+        if (playerIndex === 0) {
+          // Host pushes full state proactively; small delay ensures the guest's
+          // data handler is wired before the message arrives.
+          setTimeout(() => sendMove({ type: 'STATE_SYNC', state: stateRef.current }), 200)
+        } else {
+          // Guest also requests sync as a fallback (handles host-initiated reconnect)
+          setTimeout(() => sendMove({ type: 'STATE_SYNC_REQUEST' }), 100)
+        }
       },
       // onAttempt — update counter
       (n) => setReconnAttempt(n),

@@ -7,6 +7,9 @@ let _onOpponentMove = null, _onDisconnect = null, _onEmote = null
 let _savedRoomCode    = null
 let _savedPlayerIndex = 0
 let _reconnTimer      = null
+// Guards the close handler so _destroyPeer() during a reconnect attempt
+// does not re-trigger the disconnect flow.
+let _reconnecting     = false
 
 // ── Internal helpers ───────────────────────────────────────────────────────
 function _destroyPeer() {
@@ -20,7 +23,7 @@ function _wireConn() {
     if (msg.type === 'EMOTE') _onEmote?.(msg)
     else _onOpponentMove?.(msg)
   })
-  conn.on('close', () => _onDisconnect?.())
+  conn.on('close', () => { if (!_reconnecting) _onDisconnect?.() })
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
@@ -58,6 +61,7 @@ export function join(roomCode, onConnect) {
  */
 export function startReconnect(onSuccess, onAttempt, onFail, maxAttempts = 5) {
   if (!_savedRoomCode) { onFail?.(); return }
+  _reconnecting = true
   let attempt = 0
 
   const tryOnce = () => {
@@ -66,11 +70,21 @@ export function startReconnect(onSuccess, onAttempt, onFail, maxAttempts = 5) {
     _destroyPeer()
 
     let done = false
-    const succeed = () => { if (done) return; done = true; clearTimeout(_reconnTimer); onSuccess?.() }
+    const succeed = () => {
+      if (done) return
+      done = true
+      _reconnecting = false
+      clearTimeout(_reconnTimer)
+      onSuccess?.()
+    }
+    const fail = () => {
+      _reconnecting = false
+      onFail?.()
+    }
     const scheduleNext = () => {
       if (done) return
       if (attempt < maxAttempts) { _reconnTimer = setTimeout(tryOnce, 3000) }
-      else onFail?.()
+      else fail()
     }
 
     if (_savedPlayerIndex === 0) {
@@ -89,7 +103,7 @@ export function startReconnect(onSuccess, onAttempt, onFail, maxAttempts = 5) {
       peer.on('open', () => {
         clearTimeout(_reconnTimer)
         conn = peer.connect(_savedRoomCode)
-        conn.on('open',  succeed)
+        conn.on('open',  () => { _wireConn(); succeed() })
         conn.on('error', scheduleNext)
         _reconnTimer = setTimeout(scheduleNext, 8000)
       })
